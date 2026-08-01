@@ -53,6 +53,7 @@
   padding: 4rem 1.5rem;
   max-width: 900px;
   margin: 0 auto;
+  width: 100%;
 }
 
 .badge {
@@ -95,69 +96,216 @@
   max-width: 750px;
 }
 
-.description strong {
-  color: #e2e8f0;
-  font-weight: 600;
-}
-
-.cta-container {
-  margin-bottom: 3.5rem;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-  color: #ffffff;
-  font-size: 1.125rem;
-  font-weight: 600;
-  padding: 0.875rem 2.25rem;
-  border: none;
+.error-banner {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  padding: 0.75rem 1.5rem;
   border-radius: 0.5rem;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+  margin-bottom: 1.5rem;
+  width: 100%;
+  max-width: 600px;
 }
 
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
-  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+.loading-state {
+  font-size: 1.125rem;
+  color: #a5b4fc;
+  padding: 2rem;
 }
 
 .dept-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1.25rem;
   width: 100%;
-  max-width: 800px;
+  max-width: 850px;
   margin-top: 1rem;
 }
 
 .dept-card {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 0.75rem;
-  padding: 1.25rem 1rem;
+  border-radius: 0.875rem;
+  padding: 1.5rem 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s ease;
+  gap: 0.6rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
 }
 
 .dept-card:hover {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(99, 102, 241, 0.4);
-  transform: translateY(-3px);
+  border-color: rgba(99, 102, 241, 0.5);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.dept-card.joining {
+  opacity: 0.7;
+  cursor: wait;
 }
 
 .dept-icon {
-  font-size: 1.75rem;
+  font-size: 2.25rem;
 }
 
 .dept-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.dept-code {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #818cf8;
+  background: rgba(99, 102, 241, 0.1);
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.25rem;
+  letter-spacing: 0.05em;
+}
+
+.btn-join {
+  margin-top: 0.5rem;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: #ffffff;
   font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+.btn-join:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+}
+
+.btn-join:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Token Result Card */
+.token-card {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 1.25rem;
+  padding: 2.5rem 2rem;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.token-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.token-badge {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.token-header h3 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.token-number-box {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+  border: 1px dashed rgba(99, 102, 241, 0.4);
+  border-radius: 0.875rem;
+  padding: 1.25rem 2rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.token-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #a5b4fc;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.token-number {
+  font-size: 3rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  background: linear-gradient(135deg, #a5b4fc 0%, #ffffff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.token-details {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  background: rgba(15, 23, 42, 0.4);
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.detail-label {
+  font-size: 0.75rem;
+  color: #94a3b8;
   font-weight: 500;
-  color: #cbd5e1;
+}
+
+.detail-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.65rem 1.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
 }
 
 .footer {
