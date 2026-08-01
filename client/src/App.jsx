@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import StaffDashboard from './components/StaffDashboard';
 import './App.css';
 
 const ICON_MAP = {
@@ -10,6 +11,7 @@ const ICON_MAP = {
 };
 
 function App() {
+  const [activeTab, setActiveTab] = useState('student');
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -79,76 +81,98 @@ function App() {
           <div className="logo-badge">Q</div>
           <span className="logo-text">QHandle</span>
         </div>
+        <nav className="nav-links">
+          <button
+            type="button"
+            className={`nav-btn ${activeTab === 'student' ? 'active' : ''}`}
+            onClick={() => setActiveTab('student')}
+          >
+            Student Queue
+          </button>
+          <button
+            type="button"
+            className={`nav-btn ${activeTab === 'staff' ? 'active' : ''}`}
+            onClick={() => setActiveTab('staff')}
+          >
+            Staff Dashboard
+          </button>
+        </nav>
       </header>
 
       <main className="hero-section">
-        <div className="badge">Campus Queue Management</div>
-        <h1 className="title">QHandle</h1>
-        <p className="subtitle">Smart Multi-Department Queue Management System</p>
-        <p className="description">
-          Select a department below to join the queue and get your instant queue token.
-        </p>
-
-        {error && (
-          <div className="error-banner">
-            <p>⚠️ {error}</p>
-          </div>
-        )}
-
-        {selectedToken ? (
-          <div className="token-card">
-            <div className="token-header">
-              <span className="token-badge">Token Generated</span>
-              <h3>{selectedToken.departmentName}</h3>
-            </div>
-            <div className="token-number-box">
-              <span className="token-label">Token Number</span>
-              <div className="token-number">{selectedToken.tokenNumber}</div>
-            </div>
-            <div className="token-details">
-              <div className="detail-item">
-                <span className="detail-label">Assigned Counter</span>
-                <span className="detail-value">{selectedToken.counter}</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">Queue Position</span>
-                <span className="detail-value">#{selectedToken.position}</span>
-              </div>
-            </div>
-            <button className="btn-secondary" onClick={handleResetToken} type="button">
-              Join Another Queue
-            </button>
-          </div>
-        ) : (
+        {activeTab === 'student' ? (
           <>
-            {loading ? (
-              <div className="loading-state">Loading departments...</div>
-            ) : (
-              <div className="dept-grid">
-                {departments.map((dept) => {
-                  const icon = ICON_MAP[dept.name] || '🏢';
-                  const isJoining = joiningId === dept._id;
-                  return (
-                    <div
-                      key={dept._id}
-                      className={`dept-card ${isJoining ? 'joining' : ''}`}
-                      onClick={() => !isJoining && handleJoinQueue(dept)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => e.key === 'Enter' && handleJoinQueue(dept)}
-                    >
-                      <span className="dept-icon">{icon}</span>
-                      <span className="dept-name">{dept.name}</span>
-                      <span className="dept-code">{dept.code}</span>
-                      <button className="btn-join" type="button" disabled={isJoining}>
-                        {isJoining ? 'Joining...' : 'Join Queue'}
-                      </button>
-                    </div>
-                  );
-                })}
+            <div className="badge">Campus Queue Management</div>
+            <h1 className="title">QHandle</h1>
+            <p className="subtitle">Smart Multi-Department Queue Management System</p>
+            <p className="description">
+              Select a department below to join the queue and get your instant queue token.
+            </p>
+
+            {error && (
+              <div className="error-banner">
+                <p>⚠️ {error}</p>
               </div>
             )}
+
+            {selectedToken ? (
+              <div className="token-card">
+                <div className="token-header">
+                  <span className="token-badge">Token Generated</span>
+                  <h3>{selectedToken.departmentName}</h3>
+                </div>
+                <div className="token-number-box">
+                  <span className="token-label">Token Number</span>
+                  <div className="token-number">{selectedToken.tokenNumber}</div>
+                </div>
+                <div className="token-details">
+                  <div className="detail-item">
+                    <span className="detail-label">Assigned Counter</span>
+                    <span className="detail-value">{selectedToken.counter}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Queue Position</span>
+                    <span className="detail-value">#{selectedToken.position}</span>
+                  </div>
+                </div>
+                <button className="btn-secondary" onClick={handleResetToken} type="button">
+                  Join Another Queue
+                </button>
+              </div>
+            ) : (
+              <>
+                {loading ? (
+                  <div className="loading-state">Loading departments...</div>
+                ) : (
+                  <div className="dept-grid">
+                    {departments.map((dept) => {
+                      const icon = ICON_MAP[dept.name] || '🏢';
+                      const isJoining = joiningId === dept._id;
+                      return (
+                        <div
+                          key={dept._id}
+                          className={`dept-card ${isJoining ? 'joining' : ''}`}
+                          onClick={() => !isJoining && handleJoinQueue(dept)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => e.key === 'Enter' && handleJoinQueue(dept)}
+                        >
+                          <span className="dept-icon">{icon}</span>
+                          <span className="dept-name">{dept.name}</span>
+                          <span className="dept-code">{dept.code}</span>
+                          <button className="btn-join" type="button" disabled={isJoining}>
+                            {isJoining ? 'Joining...' : 'Join Queue'}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
           </>
+        ) : (
+          <StaffDashboard departments={departments} />
         )}
       </main>
 
@@ -160,3 +184,4 @@ function App() {
 }
 
 export default App;
+

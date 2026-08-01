@@ -67,4 +67,121 @@ router.post('/queue/join', async (req, res) => {
   }
 });
 
+// GET /api/staff/:departmentId/counters - Return all counters for selected department
+router.get('/staff/:departmentId/counters', async (req, res) => {
+  try {
+    const { departmentId } = req.params;
+    const counters = await Counter.find({ department: departmentId }).lean();
+
+    const countersWithServing = await Promise.all(
+      counters.map(async (counter) => {
+        const servingToken = await QueueToken.findOne({
+          counter: counter._id,
+          status: 'Serving',
+        });
+        return {
+          ...counter,
+          currentServingToken: servingToken || null,
+        };
+      })
+    );
+
+    res.json(countersWithServing);
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// GET /api/staff/:departmentId/queue - Return waiting QueueTokens grouped by counter
+router.get('/staff/:departmentId/queue', async (req, res) => {
+  try {
+    const { departmentId } = req.params;
+    const counters = await Counter.find({ department: departmentId });
+
+    const groupedQueue = {};
+    counters.forEach((c) => {
+      groupedQueue[c.name] = [];
+    });
+
+    const waitingTokens = await QueueToken.find({
+      department: departmentId,
+      status: 'Waiting',
+    })
+      .sort({ createdAt: 1 })
+      .populate('counter', 'name');
+
+    waitingTokens.forEach((token) => {
+      const counterName = token.counter?.name;
+      if (counterName) {
+        if (!groupedQueue[counterName]) {
+          groupedQueue[counterName] = [];
+        }
+        groupedQueue[counterName].push(token);
+      }
+    });
+
+    res.json(groupedQueue);
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// POST /api/staff/:counterId/call-next - Call next waiting token for counter
+router.post('/staff/:counterId/call-next', async (req, res) => {
+  try {
+    const { counterId } = req.params;
+
+    const token = await QueueToken.findOne({
+      counter: counterId,
+      status: 'Waiting',
+    }).sort({ createdAt: 1 });
+
+    if (!token) {
+      return res.status(404).json({ success: false, message: 'No waiting tokens for this counter' });
+    }
+
+    token.status = 'Serving';
+    await token.save();
+
+    return res.json({
+      success: true,
+      token,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// POST /api/staff/:counterId/complete - Mark currently serving token complete
+router.post('/staff/:counterId/complete', async (req, res) => {
+  try {
+    const { counterId } = req.params;
+
+    const counter = await Counter.findById(counterId);
+    if (!counter) {
+      return res.status(404).json({ success: false, message: 'Counter not found' });
+    }
+
+    const servingToken = await QueueToken.findOne({
+      counter: counterId,
+      status: 'Serving',
+    });
+
+    if (servingToken) {
+      servingToken.status = 'Completed';
+      await servingToken.save();
+    }
+
+    counter.currentQueueCount = Math.max(0, counter.currentQueueCount - 1);
+    await counter.save();
+
+    return res.json({
+      success: true,
+      message: 'Token completed successfully',
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 export default router;
