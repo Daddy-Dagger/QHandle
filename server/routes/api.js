@@ -2,6 +2,7 @@ import express from 'express';
 import Department from '../models/Department.js';
 import Counter from '../models/Counter.js';
 import QueueToken from '../models/QueueToken.js';
+import Student from '../models/Student.js';
 
 const router = express.Router();
 
@@ -12,6 +13,85 @@ router.get('/departments', async (req, res) => {
     res.json(departments);
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// POST /api/students/register - New student registration (Sign Up)
+router.post('/students/register', async (req, res) => {
+  try {
+    const { studentId, name, email, department } = req.body;
+
+    if (!studentId || !studentId.trim()) {
+      return res.status(400).json({ success: false, message: 'Student Roll No / ID is required' });
+    }
+    if (!name || !name.trim()) {
+      return res.status(400).json({ success: false, message: 'Student Full Name is required' });
+    }
+
+    const cleanId = studentId.trim();
+    const cleanName = name.trim();
+
+    // Check if student already registered
+    const existingStudent = await Student.findOne({ studentId: cleanId });
+    if (existingStudent) {
+      return res.status(400).json({
+        success: false,
+        message: 'This Student ID is already registered! Please use Sign In.',
+      });
+    }
+
+    const newStudent = await Student.create({
+      studentId: cleanId,
+      name: cleanName,
+      email: email ? email.trim() : '',
+      department: department ? department.trim() : 'General',
+    });
+
+    return res.json({
+      success: true,
+      message: 'Registration successful!',
+      student: {
+        studentId: newStudent.studentId,
+        name: newStudent.name,
+        email: newStudent.email,
+        department: newStudent.department,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// POST /api/students/login - Student login (Sign In)
+router.post('/students/login', async (req, res) => {
+  try {
+    const { studentId, name } = req.body;
+
+    if (!studentId || !studentId.trim()) {
+      return res.status(400).json({ success: false, message: 'Student Roll No / ID is required' });
+    }
+
+    const cleanId = studentId.trim();
+    const cleanName = name ? name.trim() : 'Student';
+
+    // Find or create student record for quick access
+    let student = await Student.findOne({ studentId: cleanId });
+    if (!student && name) {
+      student = await Student.create({
+        studentId: cleanId,
+        name: cleanName,
+      });
+    }
+
+    return res.json({
+      success: true,
+      student: {
+        studentId: student ? student.studentId : cleanId,
+        name: student ? student.name : cleanName,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
   }
 });
 
