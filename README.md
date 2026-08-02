@@ -1,8 +1,53 @@
 # QHandle
 
-**Smart Multi-Department Queue Management System**
+**Smart Multi-Department Campus Queue Management System**
 
-QHandle is a MERN stack application designed to help colleges manage student queues efficiently across key campus departments including **Scholarship**, **Accounts**, **Examination Cell**, **Library**, and **Hostel Office**.
+QHandle is a modern MERN stack queue management platform designed for educational institutions to eliminate physical waiting lines and streamline student administrative services across key campus departments.
+
+---
+
+## 🌟 Key Features
+
+- 🎓 **Student Portal**
+  - **Instant Ticket Issuance**: Issue verified digital queue passes (e.g., `SCH-001`, `ACC-002`).
+  - **Live Progress & Estimated Wait**: Real-time position updates and estimated wait time calculations.
+  - **Leave Queue Feature**: Students can voluntarily cancel their token and leave the queue, automatically adjusting live position counters.
+  - **Pass Actions**: Print digital pass, copy token number, and refresh queue status.
+
+- 💻 **Staff & Faculty Control Center**
+  - **Counter Terminals**: Manage individual service counters (Counter A, Counter B, Counter C).
+  - **Call Next & Complete**: One-click actions to call the next waiting token to a counter or mark serving tokens complete.
+  - **Waiting Queue Ledger**: View and search active waiting tokens grouped by service counter.
+
+- 📺 **Lobby TV Display Screen**
+  - **Public Monitor**: Live display showing currently served tokens per counter, upcoming waiting lists, live clock ticker, and announcement marquee.
+
+- 🛡️ **Con-Currency & Reliability**
+  - **Atomic Sequence Engine**: Uses MongoDB atomic `$inc` updates and database constraints to guarantee zero duplicate tokens even under heavy concurrent load.
+  - **Daily Token Reset**: Automatically resets sequence numbers to `001` every day per department.
+  - **Index Synchronization**: Auto-syncs database indexes on server startup.
+
+- 🌐 **Multi-Language Support**
+  - Built-in localization for **English**, **Hindi (हिंदी)**, and **Punjabi (ਪੰਜਾਬੀ)**.
+
+---
+
+## 🏛️ Supported Campus Departments
+
+1. **Scholarship Office** (`SCH`) — Financial aid, fee concessions & scholarship processing.
+2. **Accounts Office** (`ACC`) — Fee payments, tuition receipts, dues & financial clearances.
+3. **Examination Cell** (`EXM`) — Hall tickets, grade sheets, transcripts & re-evaluations.
+4. **Library** (`LIB`) — Book issuance/returns, membership cards & research access.
+5. **Hostel Office** (`HST`) — Room allocations, hostel fees & maintenance requests.
+6. **IT & Tech Support** (`ITS`) — Wi-Fi credentials, portal logins, LMS access & laptop support.
+
+---
+
+## ⚙️ Tech Stack
+
+- **Frontend**: React, Vite, Lucide React icons, Canvas Confetti, Vanilla CSS (Glassmorphism & dark mode design system).
+- **Backend**: Node.js, Express.js, MongoDB, Mongoose ODM.
+- **Dev Tooling**: Concurrently (unified client and server execution).
 
 ---
 
@@ -10,72 +55,100 @@ QHandle is a MERN stack application designed to help colleges manage student que
 
 ```
 QHandle/
-├── client/                 # React + Vite frontend
+├── client/                     # React + Vite Frontend
 │   ├── src/
-│   │   ├── App.jsx         # QHandle Landing Page component
-│   │   ├── App.css         # Modern styling & design system
-│   │   ├── index.css       # Global styles & CSS resets
-│   │   └── main.jsx        # React entry point
-│   ├── index.html          # HTML shell with Google Fonts
+│   │   ├── components/         # UI Components
+│   │   │   ├── BackgroundCanvas.jsx
+│   │   │   ├── LanguageSelector.jsx
+│   │   │   ├── StaffDashboard.jsx
+│   │   │   ├── StaffLoginPage.jsx
+│   │   │   ├── StudentLoginPage.jsx
+│   │   │   ├── TokenCard.jsx
+│   │   │   └── TVDisplay.jsx
+│   │   ├── context/            # Language & state context
+│   │   │   └── LanguageContext.jsx
+│   │   ├── utils/              # Audio & translation helpers
+│   │   │   ├── audio.js
+│   │   │   └── translations.js
+│   │   ├── App.jsx             # Main Application shell
+│   │   ├── App.css             # Glassmorphism styling & tokens
+│   │   └── main.jsx
 │   └── package.json
-├── server/                 # Express backend
-│   ├── index.js            # Express server, CORS & API routes
+├── server/                     # Express + MongoDB Backend
+│   ├── config/                 # DB connection & seed scripts
+│   │   ├── db.js
+│   │   └── seed.js
+│   ├── models/                 # Mongoose Schemas
+│   │   ├── Counter.js
+│   │   ├── Department.js
+│   │   └── QueueToken.js
+│   ├── routes/                 # API Endpoints
+│   │   └── api.js
+│   ├── index.js                # Server entry point
+│   ├── .env                    # Environment variables
 │   └── package.json
-├── .gitignore              # Ignored files (node_modules, builds, logs)
-├── README.md               # Project documentation
-└── package.json            # Root configuration with unified scripts
+├── README.md
+└── package.json                # Root package configuration
 ```
-
----
-
-## ⚙️ Tech Stack
-
-- **Frontend**: React (Vite), Modern Vanilla CSS (Inter font, sleek design system)
-- **Backend**: Express.js, Node.js (with `--watch` mode), CORS
-- **Dev Tooling**: Concurrently (for unified parallel execution)
-
----
-
-## 🚀 Getting Started
-
-### 1. Installation
-
-Install root, frontend, and backend dependencies with a single command:
-
-```bash
-npm run install:all
-```
-
-Or install root dependencies, then child directories separately:
-
-```bash
-# Root dependencies (concurrently)
-npm install
-
-# Frontend dependencies
-cd client && npm install
-
-# Backend dependencies
-cd server && npm install
-```
-
----
-
-### 2. Available Scripts
-
-From the root directory (`/Users/aryan/Documents/QHandle`), you can run:
-
-| Command | Description |
-| :--- | :--- |
-| `npm run dev` | **Unified Workflow**: Runs both React frontend & Express backend simultaneously using `concurrently` |
-| `npm run client` | Starts only the React frontend (Vite dev server) |
-| `npm run server` | Starts only the Express backend server (Node `--watch` mode) |
-| `npm run install:all` | Installs node modules for both `client` and `server` folders |
 
 ---
 
 ## 📡 API Endpoints
 
-- **`GET /api/health`**
-  - **Response**: `{ "status": "ok", "app": "QHandle" }`
-  - **Purpose**: Health check endpoint to verify backend operational status.
+### Student Endpoints
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/departments` | Fetch all active campus departments |
+| `POST` | `/api/queue/join` | Join department queue & generate digital token |
+| `POST` | `/api/queue/leave` | Cancel waiting token and leave queue |
+
+### Staff & TV Endpoints
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/staff/:departmentId/counters` | Fetch counters & serving tokens for a department |
+| `GET` | `/api/staff/:departmentId/queue` | Fetch waiting queue tokens grouped by counter |
+| `POST` | `/api/staff/:counterId/call-next` | Call next waiting token to counter |
+| `POST` | `/api/staff/:counterId/complete` | Complete currently serving token |
+| `POST` | `/api/departments/:id/reset-sequence` | Manually reset department daily token sequence |
+
+### System Endpoints
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/health` | Backend health check endpoint |
+
+---
+
+## 🚀 Getting Started
+
+### 1. Prerequisites
+
+- **Node.js**: v18+ recommended.
+- **MongoDB**: Local MongoDB instance running on `mongodb://127.0.0.1:27017` or a MongoDB Atlas URI.
+
+### 2. Environment Setup
+
+Configure `server/.env`:
+
+```env
+MONGO_URI=mongodb://127.0.0.1:27017/qhandle
+PORT=5001
+```
+
+### 3. Installation
+
+Install root, frontend, and backend dependencies with a single command from the project root:
+
+```bash
+npm run install:all
+```
+
+### 4. Running Locally
+
+Start both client and server concurrently:
+
+```bash
+npm run dev
+```
+
+- **Frontend**: `http://localhost:5173`
+- **Backend API**: `http://localhost:5001`
