@@ -27,7 +27,9 @@ import StaffDashboard from './components/StaffDashboard';
 import TVDisplay from './components/TVDisplay';
 import TokenCard from './components/TokenCard';
 import BackgroundCanvas from './components/BackgroundCanvas';
+import LanguageSelector from './components/LanguageSelector';
 import { soundFX } from './utils/audio';
+import { useLanguage } from './context/LanguageContext';
 import './App.css';
 
 const DEPT_CONFIG = {
@@ -76,6 +78,8 @@ const DEPT_CONFIG = {
 };
 
 function App() {
+  const { t, getTranslatedDept } = useLanguage();
+
   const [studentSession, setStudentSession] = useState(() => {
     try {
       const saved = localStorage.getItem('qhandle_student_session');
@@ -213,10 +217,15 @@ function App() {
     soundFX.playClick();
   };
 
-  const filteredDepartments = departments.filter((d) =>
-    d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    d.code.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredDepartments = departments.filter((d) => {
+    const translated = getTranslatedDept(d.name, '');
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      d.name.toLowerCase().includes(searchLower) ||
+      translated.name.toLowerCase().includes(searchLower) ||
+      d.code.toLowerCase().includes(searchLower)
+    );
+  });
 
   return (
     <div className="app-container">
@@ -231,7 +240,7 @@ function App() {
           </div>
           <div className="logo-text-group">
             <span className="logo-text">QHandle</span>
-            <span className="logo-tagline">SMART QUEUE</span>
+            <span className="logo-tagline">{t('smartQueue')}</span>
           </div>
         </div>
 
@@ -245,7 +254,7 @@ function App() {
             }}
           >
             <UserCheck size={16} />
-            <span>Student Portal</span>
+            <span>{t('studentPortal')}</span>
           </button>
 
           <button
@@ -257,7 +266,7 @@ function App() {
             }}
           >
             <LayoutDashboard size={16} />
-            <span>Staff Portal</span>
+            <span>{t('staffPortal')}</span>
           </button>
 
           <button
@@ -269,14 +278,18 @@ function App() {
             }}
           >
             <Tv size={16} />
-            <span>Lobby TV View</span>
+            <span>{t('tvView')}</span>
           </button>
 
+          {/* Multi-Language Selector Dropdown */}
+          <LanguageSelector />
+
+          {/* Audio Toggle */}
           <button
             type="button"
             className="sound-toggle-btn"
             onClick={toggleSound}
-            title={soundMuted ? 'Unmute Audio' : 'Mute Audio'}
+            title={soundMuted ? t('soundUnmute') : t('soundMute')}
           >
             {soundMuted ? <VolumeX size={18} /> : <Volume2 size={18} className="text-emerald" />}
           </button>
@@ -306,34 +319,34 @@ function App() {
                         <GraduationCap size={20} />
                       </div>
                       <div className="user-details">
-                        <span className="user-name-text">Welcome, {studentSession.name}</span>
-                        <span className="user-id-text">Student Roll / ID: <strong>{studentSession.studentId}</strong></span>
+                        <span className="user-name-text">{t('welcomeUser', { name: studentSession.name })}</span>
+                        <span className="user-id-text">{t('studentRollId')} <strong>{studentSession.studentId}</strong></span>
                       </div>
                     </div>
                     <button
                       type="button"
                       className="logout-icon-btn"
                       onClick={handleStudentLogout}
-                      title="Log Out Student"
+                      title={t('logOut')}
                     >
                       <LogOut size={14} />
-                      <span>Log Out</span>
+                      <span>{t('logOut')}</span>
                     </button>
                   </div>
 
                   {/* Hero Headline */}
                   <div className="hero-badge">
                     <Sparkles size={14} className="text-amber" />
-                    <span>Next-Gen Campus Queue System</span>
+                    <span>{t('nextGenSystem')}</span>
                   </div>
 
                   <h1 className="title shimmer-text">
-                    Queue Less. <br />
-                    <span className="gradient-highlight">Achieve More.</span>
+                    {t('heroTitleLine1')} <br />
+                    <span className="gradient-highlight">{t('heroTitleLine2')}</span>
                   </h1>
 
                   <p className="subtitle">
-                    Select a department below to instantly issue your student queue token.
+                    {t('heroSubtitle')}
                   </p>
 
                   {/* Campus Live Metrics Bar */}
@@ -341,8 +354,8 @@ function App() {
                     <div className="stat-pill">
                       <Activity size={18} className="text-emerald" />
                       <div>
-                        <span className="pill-val">{departments.length || 6} Active</span>
-                        <span className="pill-lbl">Departments</span>
+                        <span className="pill-val">{departments.length || 6} {t('openStatus')}</span>
+                        <span className="pill-lbl">{t('activeDepartments')}</span>
                       </div>
                     </div>
                     <div className="stat-divider"></div>
@@ -350,15 +363,15 @@ function App() {
                       <Clock size={18} className="text-sky" />
                       <div>
                         <span className="pill-val">~3 Mins</span>
-                        <span className="pill-lbl">Avg Wait Time</span>
+                        <span className="pill-lbl">{t('avgWaitTime')}</span>
                       </div>
                     </div>
                     <div className="stat-divider"></div>
                     <div className="stat-pill">
                       <ShieldCheck size={18} className="text-indigo" />
                       <div>
-                        <span className="pill-val">Verified</span>
-                        <span className="pill-lbl">Digital Ticket</span>
+                        <span className="pill-val">{t('openStatus')}</span>
+                        <span className="pill-lbl">{t('verifiedTicket')}</span>
                       </div>
                     </div>
                   </div>
@@ -369,7 +382,7 @@ function App() {
                       <Search size={18} className="search-icon" />
                       <input
                         type="text"
-                        placeholder="Search department (e.g. Scholarship, Accounts, Exam)..."
+                        placeholder={t('searchDeptPlaceholder')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                       />
@@ -386,7 +399,7 @@ function App() {
                   {loading ? (
                     <div className="loading-state glass-card">
                       <div className="spinner"></div>
-                      <p>Loading Department Services...</p>
+                      <p>{t('loadingDepartments')}</p>
                     </div>
                   ) : (
                     <div className="dept-grid">
@@ -397,6 +410,7 @@ function App() {
                           color: '#818cf8',
                           description: 'Campus services office',
                         };
+                        const translatedDept = getTranslatedDept(dept.name, cfg.description);
                         const IconComponent = cfg.icon;
                         const isJoining = joiningId === dept._id;
 
@@ -417,16 +431,16 @@ function App() {
                             </div>
 
                             <div className="dept-card-body">
-                              <h3 className="dept-name">{dept.name}</h3>
-                              <p className="dept-desc">{cfg.description}</p>
+                              <h3 className="dept-name">{translatedDept.name}</h3>
+                              <p className="dept-desc">{translatedDept.desc}</p>
                             </div>
 
                             <div className="dept-card-footer">
                               <button className="btn-join-glow" type="button" disabled={isJoining}>
                                 {isJoining ? (
-                                  <span className="btn-loading">Issuing Token...</span>
+                                  <span className="btn-loading">{t('issuingToken')}</span>
                                 ) : (
-                                  <span>Get Queue Token →</span>
+                                  <span>{t('getQueueToken')}</span>
                                 )}
                               </button>
                             </div>
@@ -476,7 +490,7 @@ function App() {
 
       {/* Footer */}
       <footer className="footer glass-footer">
-        <p>QHandle Campus Network &copy; {new Date().getFullYear()} — Powered by Smart Queue Engine</p>
+        <p>{t('footerCopy', { year: new Date().getFullYear() })}</p>
       </footer>
     </div>
   );

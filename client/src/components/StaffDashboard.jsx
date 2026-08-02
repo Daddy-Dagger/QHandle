@@ -15,8 +15,10 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { soundFX } from '../utils/audio';
+import { useLanguage } from '../context/LanguageContext';
 
 function StaffDashboard({ departments, staffSession, onLogoutStaff }) {
+  const { t, language, getTranslatedDept } = useLanguage();
   const [selectedDeptId, setSelectedDeptId] = useState('');
   const [counters, setCounters] = useState([]);
   const [queueGrouped, setQueueGrouped] = useState({});
@@ -80,18 +82,24 @@ function StaffDashboard({ departments, staffSession, onLogoutStaff }) {
     }
   };
 
-  const handleCallNext = async (counterId) => {
+  const handleCallNext = async (counter) => {
     try {
       soundFX.playCall();
-      setActionLoading(`call-${counterId}`);
+      setActionLoading(`call-${counter._id}`);
       setError(null);
-      const res = await fetch(`/api/staff/${counterId}/call-next`, {
+      const res = await fetch(`/api/staff/${counter._id}/call-next`, {
         method: 'POST',
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
         throw new Error(data.message || 'Failed to call next token');
       }
+
+      // Voice speech announcement in current language!
+      if (data.token?.tokenNumber) {
+        soundFX.announceToken(data.token.tokenNumber, counter.name, language);
+      }
+
       await fetchStaffData(selectedDeptId);
     } catch (err) {
       console.error('Error calling next token:', err);
@@ -139,8 +147,8 @@ function StaffDashboard({ departments, staffSession, onLogoutStaff }) {
             <Building2 size={24} />
           </div>
           <div>
-            <h2>Staff Control Center</h2>
-            <p className="dashboard-subtitle">Manage counters & invoke caller system</p>
+            <h2>{t('staffControlCenter')}</h2>
+            <p className="dashboard-subtitle">{t('staffControlSub')}</p>
           </div>
         </div>
 
@@ -151,7 +159,9 @@ function StaffDashboard({ departments, staffSession, onLogoutStaff }) {
               <span>
                 <strong>{staffSession.name}</strong> (ID: {staffSession.staffId})
               </span>
-              <span className="staff-dept-pill">{staffSession.department}</span>
+              <span className="staff-dept-pill">
+                {getTranslatedDept(staffSession.department).name}
+              </span>
             </div>
             {onLogoutStaff && (
               <button
@@ -161,17 +171,17 @@ function StaffDashboard({ departments, staffSession, onLogoutStaff }) {
                   soundFX.playClick();
                   onLogoutStaff();
                 }}
-                title="Log Out of Staff Portal"
+                title={t('logOut')}
               >
                 <LogOut size={14} />
-                <span>Log Out</span>
+                <span>{t('logOut')}</span>
               </button>
             )}
           </div>
         )}
 
         <div className="dept-select-wrapper">
-          <label htmlFor="department-select">Department:</label>
+          <label htmlFor="department-select">{t('departmentLabel')}:</label>
           <select
             id="department-select"
             className="dept-select"
@@ -183,7 +193,7 @@ function StaffDashboard({ departments, staffSession, onLogoutStaff }) {
           >
             {departments.map((dept) => (
               <option key={dept._id} value={dept._id}>
-                {dept.name} ({dept.code})
+                {getTranslatedDept(dept.name).name} ({dept.code})
               </option>
             ))}
           </select>
@@ -194,7 +204,7 @@ function StaffDashboard({ departments, staffSession, onLogoutStaff }) {
               soundFX.playClick();
               fetchStaffData(selectedDeptId);
             }}
-            title="Refresh Data"
+            title={t('refreshData')}
           >
             <RefreshCw size={18} />
           </button>
@@ -208,7 +218,7 @@ function StaffDashboard({ departments, staffSession, onLogoutStaff }) {
             <Activity size={20} />
           </div>
           <div>
-            <span className="stat-label">Active Counters</span>
+            <span className="stat-label">{t('activeCounters')}</span>
             <span className="stat-value">{activeCounters} / {counters.length}</span>
           </div>
         </div>
@@ -218,8 +228,8 @@ function StaffDashboard({ departments, staffSession, onLogoutStaff }) {
             <Megaphone size={20} />
           </div>
           <div>
-            <span className="stat-label">Currently Serving</span>
-            <span className="stat-value">{servingCount} Tokens</span>
+            <span className="stat-label">{t('currentlyServing')}</span>
+            <span className="stat-value">{t('tokensCount', { count: servingCount })}</span>
           </div>
         </div>
 
@@ -228,8 +238,8 @@ function StaffDashboard({ departments, staffSession, onLogoutStaff }) {
             <Users size={20} />
           </div>
           <div>
-            <span className="stat-label">Total Waiting</span>
-            <span className="stat-value">{totalWaiting} Tokens</span>
+            <span className="stat-label">{t('totalWaiting')}</span>
+            <span className="stat-value">{t('tokensCount', { count: totalWaiting })}</span>
           </div>
         </div>
       </div>
@@ -244,14 +254,14 @@ function StaffDashboard({ departments, staffSession, onLogoutStaff }) {
       {loading && !counters.length ? (
         <div className="loading-state flex-center">
           <RefreshCw className="spin" size={24} />
-          <span>Loading Counter Controls...</span>
+          <span>{t('loadingCounterControls')}</span>
         </div>
       ) : (
         <>
           {/* Counters Grid */}
           <div className="section-label">
             <Sparkles size={18} className="text-indigo" />
-            <span>Counter Control Terminals</span>
+            <span>{t('counterControlTerminals')}</span>
           </div>
 
           <div className="counter-cards-grid">
@@ -266,30 +276,30 @@ function StaffDashboard({ departments, staffSession, onLogoutStaff }) {
                     <h3 className="counter-name">{counter.name}</h3>
                     <span className={`status-pill ${counter.isOpen ? 'open' : 'closed'}`}>
                       <span className={`pill-dot ${counter.isOpen ? 'green' : 'red'}`} />
-                      {counter.isOpen ? 'OPEN' : 'CLOSED'}
+                      {counter.isOpen ? t('openStatus') : t('closedStatus')}
                     </span>
                   </div>
 
                   <div className="serving-display-box">
-                    <span className="serving-label">CURRENTLY SERVING</span>
+                    <span className="serving-label">{t('currentlyServing')}</span>
                     <div className="serving-token-number">
                       {servingToken ? (
                         <span className="token-text pulse-glow">{servingToken.tokenNumber}</span>
                       ) : (
-                        <span className="none-text">VACANT</span>
+                        <span className="none-text">{t('vacantStatus')}</span>
                       )}
                     </div>
                   </div>
 
                   <div className="counter-metrics">
                     <div className="metric-box">
-                      <span className="metric-label">Waiting in Queue</span>
+                      <span className="metric-label">{t('waitingInQueueLabel')}</span>
                       <span className="metric-value">{counter.currentQueueCount}</span>
                     </div>
                     <div className="metric-box">
-                      <span className="metric-label">Status</span>
+                      <span className="metric-label">{t('statusLabel')}</span>
                       <span className="metric-value highlight">
-                        {servingToken ? 'In Service' : counter.isOpen ? 'Ready' : 'Offline'}
+                        {servingToken ? t('inService') : counter.isOpen ? t('ready') : t('offline')}
                       </span>
                     </div>
                   </div>
@@ -298,11 +308,11 @@ function StaffDashboard({ departments, staffSession, onLogoutStaff }) {
                     <button
                       type="button"
                       className="btn-action btn-call-next"
-                      onClick={() => handleCallNext(counter._id)}
+                      onClick={() => handleCallNext(counter)}
                       disabled={isCallLoading || isCompleteLoading || !counter.isOpen}
                     >
                       <Megaphone size={16} />
-                      <span>{isCallLoading ? 'Calling...' : 'Call Next'}</span>
+                      <span>{isCallLoading ? t('callingStatus') : t('callNextBtn')}</span>
                     </button>
 
                     <button
@@ -312,7 +322,7 @@ function StaffDashboard({ departments, staffSession, onLogoutStaff }) {
                       disabled={isCallLoading || isCompleteLoading || !servingToken}
                     >
                       <CheckCircle size={16} />
-                      <span>{isCompleteLoading ? 'Completing...' : 'Complete'}</span>
+                      <span>{isCompleteLoading ? t('completingStatus') : t('completeBtn')}</span>
                     </button>
                   </div>
                 </div>
@@ -325,14 +335,14 @@ function StaffDashboard({ departments, staffSession, onLogoutStaff }) {
             <div className="waiting-queue-header">
               <div className="queue-header-title">
                 <Clock size={20} className="text-indigo" />
-                <h3>Waiting Queue Ledger</h3>
+                <h3>{t('waitingQueueLedger')}</h3>
               </div>
 
               <div className="search-box">
                 <Search size={16} className="search-icon" />
                 <input
                   type="text"
-                  placeholder="Search token number..."
+                  placeholder={t('searchTokenPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -340,7 +350,7 @@ function StaffDashboard({ departments, staffSession, onLogoutStaff }) {
             </div>
 
             {Object.keys(queueGrouped).length === 0 ? (
-              <p className="no-tokens-msg">No active queues found.</p>
+              <p className="no-tokens-msg">{t('noActiveQueues')}</p>
             ) : (
               Object.entries(queueGrouped).map(([counterName, tokens]) => {
                 const filteredTokens = (tokens || []).filter((t) =>
@@ -355,16 +365,16 @@ function StaffDashboard({ departments, staffSession, onLogoutStaff }) {
                     </div>
 
                     {filteredTokens.length === 0 ? (
-                      <p className="no-tokens-msg">No matching tokens waiting for {counterName}</p>
+                      <p className="no-tokens-msg">{t('noMatchingTokens', { counter: counterName })}</p>
                     ) : (
                       <div className="table-responsive">
                         <table className="queue-table">
                           <thead>
                             <tr>
-                              <th>Queue Position</th>
-                              <th>Token Number</th>
-                              <th>Status</th>
-                              <th>Issued Time</th>
+                              <th>{t('queuePositionCol')}</th>
+                              <th>{t('tokenNumberCol')}</th>
+                              <th>{t('statusLabel')}</th>
+                              <th>{t('issuedTimeCol')}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -374,7 +384,7 @@ function StaffDashboard({ departments, staffSession, onLogoutStaff }) {
                                 <td className="token-cell">{token.tokenNumber}</td>
                                 <td>
                                   <span className="status-tag waiting">
-                                    <Clock size={12} /> {token.status}
+                                    <Clock size={12} /> {t('waitingTag')}
                                   </span>
                                 </td>
                                 <td>{new Date(token.createdAt).toLocaleTimeString()}</td>

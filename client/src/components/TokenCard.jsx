@@ -13,8 +13,10 @@ import {
   TrendingUp 
 } from 'lucide-react';
 import { soundFX } from '../utils/audio';
+import { useLanguage } from '../context/LanguageContext';
 
 const TokenCard = ({ tokenData, onReset, onRefresh }) => {
+  const { t, getTranslatedDept } = useLanguage();
   const [copied, setCopied] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -51,6 +53,7 @@ const TokenCard = ({ tokenData, onReset, onRefresh }) => {
   };
 
   const estWait = (tokenData.position - 1) * 3; // Approx 3 mins per person
+  const translatedDeptName = getTranslatedDept(tokenData.departmentName).name;
 
   return (
     <div className="token-card-wrapper animate-fade-in">
@@ -60,35 +63,35 @@ const TokenCard = ({ tokenData, onReset, onRefresh }) => {
         <div className="token-card-top">
           <div className="token-status-pill">
             <span className="pulse-dot active"></span>
-            <span>TOKEN ACTIVE</span>
+            <span>{t('tokenActive')}</span>
           </div>
           <div className="verified-stamp">
             <ShieldCheck size={14} />
-            <span>QHandle Verified</span>
+            <span>{t('qhandleVerified')}</span>
           </div>
         </div>
 
         <div className="token-dept-title">
-          <h3>{tokenData.departmentName}</h3>
+          <h3>{translatedDeptName}</h3>
           {tokenData.studentName && (
             <div className="token-student-info-chip" style={{ marginTop: '0.4rem', fontSize: '0.85rem', color: '#a7f3d0' }}>
-              <span>🎓 Issued to: <strong>{tokenData.studentName}</strong> ({tokenData.studentId})</span>
+              <span>🎓 {t('issuedTo')} <strong>{tokenData.studentName}</strong> ({tokenData.studentId})</span>
             </div>
           )}
           <p className="token-timestamp">
-            Issued at {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {t('issuedAt')} {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </p>
         </div>
 
         {/* Main Display Ticket Box */}
         <div className="token-display-box">
-          <span className="display-label">YOUR TOKEN NUMBER</span>
+          <span className="display-label">{t('yourTokenNumber')}</span>
           <div className="token-big-number">{tokenData.tokenNumber}</div>
 
           {/* Simulated barcode graphic */}
           <div className="barcode-strip">
             <div className="barcode-lines"></div>
-            <span className="barcode-text">PASS #{tokenData.tokenNumber}</span>
+            <span className="barcode-text">{t('passTag')}{tokenData.tokenNumber}</span>
           </div>
         </div>
 
@@ -99,8 +102,8 @@ const TokenCard = ({ tokenData, onReset, onRefresh }) => {
               <MapPin size={18} />
             </div>
             <div className="metric-info">
-              <span className="metric-title">Counter</span>
-              <span className="metric-val">{tokenData.counter || 'Assigning...'}</span>
+              <span className="metric-title">{t('counter')}</span>
+              <span className="metric-val">{tokenData.counter || t('assigning')}</span>
             </div>
           </div>
 
@@ -109,7 +112,7 @@ const TokenCard = ({ tokenData, onReset, onRefresh }) => {
               <TrendingUp size={18} />
             </div>
             <div className="metric-info">
-              <span className="metric-title">Position</span>
+              <span className="metric-title">{t('position')}</span>
               <span className="metric-val">#{tokenData.position}</span>
             </div>
           </div>
@@ -119,8 +122,8 @@ const TokenCard = ({ tokenData, onReset, onRefresh }) => {
               <Clock size={18} />
             </div>
             <div className="metric-info">
-              <span className="metric-title">Est. Wait</span>
-              <span className="metric-val">{estWait > 0 ? `~${estWait} min` : 'Now Next!'}</span>
+              <span className="metric-title">{t('estWait')}</span>
+              <span className="metric-val">{estWait > 0 ? t('approxMins', { mins: estWait }) : t('nowNext')}</span>
             </div>
           </div>
         </div>
@@ -128,8 +131,8 @@ const TokenCard = ({ tokenData, onReset, onRefresh }) => {
         {/* Queue Progress Bar */}
         <div className="progress-container">
           <div className="progress-header">
-            <span>People ahead in line</span>
-            <span className="highlight-text">{Math.max(0, tokenData.position - 1)} student(s)</span>
+            <span>{t('peopleAhead')}</span>
+            <span className="highlight-text">{t('studentsCountAhead', { count: Math.max(0, tokenData.position - 1) })}</span>
           </div>
           <div className="progress-track">
             <div 
@@ -145,36 +148,36 @@ const TokenCard = ({ tokenData, onReset, onRefresh }) => {
             type="button" 
             className="action-btn secondary" 
             onClick={handleCopy}
-            title="Copy Token Number"
+            title={t('copyToken')}
           >
             {copied ? <Check size={16} className="text-emerald" /> : <Copy size={16} />}
-            <span>{copied ? 'Copied!' : 'Copy'}</span>
+            <span>{copied ? t('copied') : t('copyToken')}</span>
           </button>
 
           <button 
             type="button" 
             className="action-btn secondary" 
             onClick={handlePrint}
-            title="Print Ticket Pass"
+            title={t('printPass')}
           >
             <Printer size={16} />
-            <span>Print Pass</span>
+            <span>{t('printPass')}</span>
           </button>
 
           <button 
             type="button" 
             className={`action-btn secondary ${isRefreshing ? 'spin' : ''}`} 
             onClick={handleManualRefresh}
-            title="Refresh Position"
+            title={t('refreshPosition')}
           >
             <RefreshCw size={16} />
-            <span>Refresh</span>
+            <span>{t('refreshPosition')}</span>
           </button>
         </div>
 
         <button type="button" className="btn-primary-glow" onClick={() => { soundFX.playClick(); onReset(); }}>
           <ArrowLeft size={18} />
-          <span>Join Another Queue</span>
+          <span>{t('joinAnotherQueue')}</span>
         </button>
       </div>
     </div>

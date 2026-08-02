@@ -1942,3 +1942,151 @@ body {
   color: #fca5a5;
 }
 
+/* ==========================================================================
+   Language Selector Component Styles
+   ========================================================================== */
+.lang-selector-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.lang-selector-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.85rem;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.75rem;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(8px);
+}
+
+.lang-selector-btn:hover,
+.lang-selector-btn.active {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.2);
+}
+
+.lang-selector-btn.compact {
+  padding: 0.45rem 0.65rem;
+}
+
+.lang-globe-icon {
+  color: var(--accent-indigo);
+}
+
+.lang-flag {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.lang-name {
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.lang-chevron {
+  color: var(--text-secondary);
+  transition: transform 0.2s ease;
+}
+
+.lang-chevron.rotate {
+  transform: rotate(180deg);
+}
+
+.lang-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 170px;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 1rem;
+  padding: 0.4rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  z-index: 200;
+}
+
+.lang-dropdown-header {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 0.3rem;
+}
+
+.lang-option-btn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 0.65rem;
+  padding: 0.5rem 0.65rem;
+  background: transparent;
+  border: none;
+  border-radius: 0.6rem;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.lang-option-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.lang-option-btn.selected {
+  background: rgba(99, 102, 241, 0.2);
+}
+
+.option-flag {
+  font-size: 1.25rem;
+}
+
+.option-label-group {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.option-native {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.option-sub {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.text-selected {
+  margin-left: auto;
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-pop-in {
+  animation: popIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Shield, Building2, User, IdCard, ArrowRight, UserCheck, Sparkles, LayoutDashboard } from 'lucide-react';
 import { soundFX } from '../utils/audio';
+import { useLanguage } from '../context/LanguageContext';
 
 function StaffLoginPage({ departments, onLogin, onSwitchToStudent }) {
+  const { t, getTranslatedDept } = useLanguage();
   const [staffId, setStaffId] = useState('');
   const [department, setDepartment] = useState('');
   const [name, setName] = useState('');
@@ -11,15 +13,15 @@ function StaffLoginPage({ departments, onLogin, onSwitchToStudent }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!staffId.trim()) {
-      setError('Please enter your Staff ID No.');
+      setError(t('errorEnterStaffId'));
       return;
     }
     if (!department) {
-      setError('Please select your Department.');
+      setError(t('errorSelectDepartment'));
       return;
     }
     if (!name.trim()) {
-      setError('Please enter your Full Name.');
+      setError(t('errorEnterName'));
       return;
     }
 
@@ -47,9 +49,9 @@ function StaffLoginPage({ departments, onLogin, onSwitchToStudent }) {
           <div className="login-badge-icon staff-badge-glow">
             <LayoutDashboard size={32} className="text-emerald" />
           </div>
-          <h2 className="login-title">Staff & Faculty Portal</h2>
+          <h2 className="login-title">{t('staffFacultyPortal')}</h2>
           <p className="login-subtitle">
-            Sign in with your Staff ID, Department, and Name to manage counter queues.
+            {t('staffLoginSub')}
           </p>
         </div>
 
@@ -66,13 +68,13 @@ function StaffLoginPage({ departments, onLogin, onSwitchToStudent }) {
           <div className="input-group">
             <label htmlFor="staffId">
               <IdCard size={16} className="input-label-icon" />
-              Staff ID No <span className="required-star">*</span>
+              {t('staffIdInputLabel')} <span className="required-star">*</span>
             </label>
             <div className="input-wrapper">
               <input
                 id="staffId"
                 type="text"
-                placeholder="e.g. STF-5042 or EMP-880"
+                placeholder={t('staffIdInputPlaceholder')}
                 value={staffId}
                 onChange={(e) => setStaffId(e.target.value)}
                 autoComplete="off"
@@ -84,7 +86,7 @@ function StaffLoginPage({ departments, onLogin, onSwitchToStudent }) {
           <div className="input-group">
             <label htmlFor="staffDepartment">
               <Building2 size={16} className="input-label-icon" />
-              Department <span className="required-star">*</span>
+              {t('departmentLabel')} <span className="required-star">*</span>
             </label>
             <div className="input-wrapper">
               <select
@@ -93,21 +95,21 @@ function StaffLoginPage({ departments, onLogin, onSwitchToStudent }) {
                 onChange={(e) => setDepartment(e.target.value)}
                 className="login-select"
               >
-                <option value="">-- Select Your Department --</option>
+                <option value="">{t('selectDepartmentPlaceholder')}</option>
                 {departments && departments.length > 0 ? (
                   departments.map((dept) => (
                     <option key={dept._id} value={dept.name}>
-                      {dept.name} ({dept.code})
+                      {getTranslatedDept(dept.name).name} ({dept.code})
                     </option>
                   ))
                 ) : (
                   <>
-                    <option value="Scholarship Office">Scholarship Office</option>
-                    <option value="Accounts Office">Accounts Office</option>
-                    <option value="Examination Cell">Examination Cell</option>
-                    <option value="Library">Library</option>
-                    <option value="Hostel Office">Hostel Office</option>
-                    <option value="IT & Tech Support">IT & Tech Support</option>
+                    <option value="Scholarship Office">{getTranslatedDept('Scholarship Office').name}</option>
+                    <option value="Accounts Office">{getTranslatedDept('Accounts Office').name}</option>
+                    <option value="Examination Cell">{getTranslatedDept('Examination Cell').name}</option>
+                    <option value="Library">{getTranslatedDept('Library').name}</option>
+                    <option value="Hostel Office">{getTranslatedDept('Hostel Office').name}</option>
+                    <option value="IT & Tech Support">{getTranslatedDept('IT & Tech Support').name}</option>
                   </>
                 )}
               </select>
@@ -118,13 +120,13 @@ function StaffLoginPage({ departments, onLogin, onSwitchToStudent }) {
           <div className="input-group">
             <label htmlFor="staffName">
               <User size={16} className="input-label-icon" />
-              Staff Name <span className="required-star">*</span>
+              {t('staffNameInputLabel')} <span className="required-star">*</span>
             </label>
             <div className="input-wrapper">
               <input
                 id="staffName"
                 type="text"
-                placeholder="e.g. Dr. Sarah Connor"
+                placeholder={t('staffNameInputPlaceholder')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 autoComplete="name"
@@ -133,14 +135,14 @@ function StaffLoginPage({ departments, onLogin, onSwitchToStudent }) {
           </div>
 
           <button type="submit" className="login-submit-btn staff-submit">
-            <span>Sign In to Staff Portal</span>
+            <span>{t('signInStaffPortal')}</span>
             <ArrowRight size={18} />
           </button>
         </form>
 
         {/* Quick Demo Fill Options */}
         <div className="quick-demo-section">
-          <p className="quick-demo-title">⚡ Quick Demo Profiles:</p>
+          <p className="quick-demo-title">{t('quickDemoProfiles')}</p>
           <div className="quick-demo-chips">
             <button
               type="button"
@@ -161,10 +163,10 @@ function StaffLoginPage({ departments, onLogin, onSwitchToStudent }) {
 
         {/* Footer switch to Student Login */}
         <div className="login-switch-footer">
-          <span>Are you a student looking for queue tokens?</span>
+          <span>{t('areYouStudentLookingToken')}</span>
           <button type="button" className="switch-link-btn" onClick={onSwitchToStudent}>
             <UserCheck size={16} />
-            <span>Go to Student Login Portal →</span>
+            <span>{t('goToStudentLogin')}</span>
           </button>
         </div>
       </div>

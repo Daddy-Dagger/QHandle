@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Volume2, VolumeX, Radio, Tv, Users, Clock } from 'lucide-react';
 import { soundFX } from '../utils/audio';
+import { useLanguage } from '../context/LanguageContext';
+import LanguageSelector from './LanguageSelector';
 
 const TVDisplay = ({ departments }) => {
+  const { t, getTranslatedDept } = useLanguage();
   const [selectedDeptId, setSelectedDeptId] = useState(departments[0]?._id || '');
   const [counters, setCounters] = useState([]);
   const [queueGrouped, setQueueGrouped] = useState({});
@@ -53,6 +56,7 @@ const TVDisplay = ({ departments }) => {
   };
 
   const selectedDeptObj = departments.find(d => d._id === selectedDeptId);
+  const translatedDeptName = selectedDeptObj ? getTranslatedDept(selectedDeptObj.name).name : '';
 
   return (
     <div className="tv-display-container animate-fade-in">
@@ -63,12 +67,15 @@ const TVDisplay = ({ departments }) => {
             <Tv size={24} />
           </div>
           <div>
-            <h2 className="tv-brand-title">CAMPUS QUEUE MONITOR</h2>
-            <p className="tv-brand-subtitle">QHandle Live Display System</p>
+            <h2 className="tv-brand-title">{t('campusQueueMonitor')}</h2>
+            <p className="tv-brand-subtitle">{t('liveDisplaySystem')}</p>
           </div>
         </div>
 
         <div className="tv-controls">
+          {/* Language Selector for TV View */}
+          <LanguageSelector compact={true} />
+
           <div className="dept-pill-selector">
             {departments.map((d) => (
               <button
@@ -112,11 +119,11 @@ const TVDisplay = ({ departments }) => {
         <div className="tv-serving-column">
           <div className="tv-section-title">
             <Radio size={20} className="pulse-red" />
-            <span>NOW SERVING — {selectedDeptObj ? selectedDeptObj.name : ''}</span>
+            <span>{t('nowServingHeader', { dept: translatedDeptName })}</span>
           </div>
 
           {loading ? (
-            <div className="tv-loading">Updating Live Feed...</div>
+            <div className="tv-loading">{t('updatingLiveFeed')}</div>
           ) : (
             <div className="tv-counter-cards">
               {counters.map((c) => {
@@ -125,21 +132,21 @@ const TVDisplay = ({ departments }) => {
                   <div key={c._id} className={`tv-counter-card ${servingToken ? 'active-serving' : 'idle'}`}>
                     <div className="tv-counter-name">{c.name}</div>
                     <div className="tv-serving-display">
-                      <span className="tv-serving-label">TOKEN</span>
+                      <span className="tv-serving-label">{t('tokenNumberCol').toUpperCase()}</span>
                       <div className="tv-token-hero">
                         {servingToken ? (
                           <span className="tv-token-num glow-text">{servingToken}</span>
                         ) : (
-                          <span className="tv-token-empty">VACANT</span>
+                          <span className="tv-token-empty">{t('vacantStatus')}</span>
                         )}
                       </div>
                     </div>
                     <div className="tv-counter-footer">
                       <span className={`status-badge ${c.isOpen ? 'open' : 'closed'}`}>
-                        {c.isOpen ? '● COUNTER OPEN' : '○ CLOSED'}
+                        {c.isOpen ? t('counterOpenTag') : t('counterClosedTag')}
                       </span>
                       <span className="queue-count-badge">
-                        <Users size={12} /> {c.currentQueueCount} waiting
+                        <Users size={12} /> {t('waitingCountTag', { count: c.currentQueueCount })}
                       </span>
                     </div>
                   </div>
@@ -153,7 +160,7 @@ const TVDisplay = ({ departments }) => {
         <div className="tv-waiting-column">
           <div className="tv-section-title">
             <Users size={20} className="text-indigo" />
-            <span>UPCOMING TOKENS</span>
+            <span>{t('upcomingTokensHeader')}</span>
           </div>
 
           <div className="tv-queue-lists">
@@ -161,21 +168,21 @@ const TVDisplay = ({ departments }) => {
               <div key={cName} className="tv-queue-group">
                 <div className="tv-group-header">
                   <span>{cName}</span>
-                  <span className="count-tag">{tokens.length} In Line</span>
+                  <span className="count-tag">{t('inLineCountTag', { count: tokens.length })}</span>
                 </div>
 
                 {tokens.length === 0 ? (
-                  <div className="tv-empty-queue">Queue is empty</div>
+                  <div className="tv-empty-queue">{t('emptyQueueMsg')}</div>
                 ) : (
                   <div className="tv-token-chips">
-                    {tokens.slice(0, 8).map((t, index) => (
-                      <div key={t._id} className={`tv-token-chip ${index === 0 ? 'next-inline' : ''}`}>
+                    {tokens.slice(0, 8).map((tItem, index) => (
+                      <div key={tItem._id} className={`tv-token-chip ${index === 0 ? 'next-inline' : ''}`}>
                         <span className="chip-pos">#{index + 1}</span>
-                        <span className="chip-num">{t.tokenNumber}</span>
+                        <span className="chip-num">{tItem.tokenNumber}</span>
                       </div>
                     ))}
                     {tokens.length > 8 && (
-                      <div className="tv-token-chip more">+{tokens.length - 8} more</div>
+                      <div className="tv-token-chip more">{t('moreTokens', { count: tokens.length - 8 })}</div>
                     )}
                   </div>
                 )}
@@ -187,9 +194,9 @@ const TVDisplay = ({ departments }) => {
 
       {/* Bottom Announcer Ticker */}
       <div className="tv-footer-ticker">
-        <div className="ticker-label">ANNOUNCEMENT</div>
+        <div className="ticker-label">{t('announcementLabel')}</div>
         <marquee className="ticker-text">
-          📢 Welcome to QHandle Campus Queue Network • Please keep your digital token receipt ready • Audio chimes will alert when your token is called at the designated counter!
+          {t('announcementMarquee')}
         </marquee>
       </div>
     </div>

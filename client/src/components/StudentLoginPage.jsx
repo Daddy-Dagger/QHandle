@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { UserCheck, Hash, User, ArrowRight, ShieldCheck, Sparkles, GraduationCap } from 'lucide-react';
 import { soundFX } from '../utils/audio';
+import { useLanguage } from '../context/LanguageContext';
 
 function StudentLoginPage({ onLogin, onSwitchToStaff }) {
+  const { t } = useLanguage();
   const [studentId, setStudentId] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
@@ -10,11 +12,11 @@ function StudentLoginPage({ onLogin, onSwitchToStaff }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!studentId.trim()) {
-      setError('Please enter your Student Roll No / Student ID.');
+      setError(t('errorEnterRoll'));
       return;
     }
     if (!name.trim()) {
-      setError('Please enter your Full Name.');
+      setError(t('errorEnterName'));
       return;
     }
 
@@ -40,9 +42,9 @@ function StudentLoginPage({ onLogin, onSwitchToStaff }) {
           <div className="login-badge-icon student-badge-glow">
             <GraduationCap size={32} className="text-indigo" />
           </div>
-          <h2 className="login-title">Student Access Portal</h2>
+          <h2 className="login-title">{t('studentAccessPortal')}</h2>
           <p className="login-subtitle">
-            Enter your credentials to access campus service queues and receive live token updates.
+            {t('studentLoginSub')}
           </p>
         </div>
 
@@ -58,13 +60,13 @@ function StudentLoginPage({ onLogin, onSwitchToStaff }) {
           <div className="input-group">
             <label htmlFor="studentId">
               <Hash size={16} className="input-label-icon" />
-              Student Roll No / Student ID <span className="required-star">*</span>
+              {t('studentRollInputLabel')} <span className="required-star">*</span>
             </label>
             <div className="input-wrapper">
               <input
                 id="studentId"
                 type="text"
-                placeholder="e.g. STU-2024-042 or 21BCE1042"
+                placeholder={t('studentRollInputPlaceholder')}
                 value={studentId}
                 onChange={(e) => setStudentId(e.target.value)}
                 autoComplete="off"
@@ -75,13 +77,13 @@ function StudentLoginPage({ onLogin, onSwitchToStaff }) {
           <div className="input-group">
             <label htmlFor="studentName">
               <User size={16} className="input-label-icon" />
-              Student Name <span className="required-star">*</span>
+              {t('studentNameInputLabel')} <span className="required-star">*</span>
             </label>
             <div className="input-wrapper">
               <input
                 id="studentName"
                 type="text"
-                placeholder="e.g. Alex Morgan"
+                placeholder={t('studentNameInputPlaceholder')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 autoComplete="name"
@@ -90,14 +92,14 @@ function StudentLoginPage({ onLogin, onSwitchToStaff }) {
           </div>
 
           <button type="submit" className="login-submit-btn student-submit">
-            <span>Sign In to Student Portal</span>
+            <span>{t('signInStudentPortal')}</span>
             <ArrowRight size={18} />
           </button>
         </form>
 
         {/* Quick Demo Fill Options */}
         <div className="quick-demo-section">
-          <p className="quick-demo-title">⚡ Quick Demo Profiles:</p>
+          <p className="quick-demo-title">{t('quickDemoProfiles')}</p>
           <div className="quick-demo-chips">
             <button
               type="button"
@@ -118,10 +120,10 @@ function StudentLoginPage({ onLogin, onSwitchToStaff }) {
 
         {/* Footer switch to Staff Login */}
         <div className="login-switch-footer">
-          <span>Are you a faculty or staff member?</span>
+          <span>{t('areYouFacultyStaff')}</span>
           <button type="button" className="switch-link-btn" onClick={onSwitchToStaff}>
             <ShieldCheck size={16} />
-            <span>Go to Staff Login Portal →</span>
+            <span>{t('goToStaffLogin')}</span>
           </button>
         </div>
       </div>

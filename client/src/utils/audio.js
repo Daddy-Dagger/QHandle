@@ -1,4 +1,4 @@
-// Professional Web Audio API sound design for QHandle Enterprise Queue System
+// Professional Web Audio API sound design & Multi-Language Voice Announcer for QHandle
 
 class SoundFX {
   constructor() {
@@ -20,7 +20,6 @@ class SoundFX {
 
   /**
    * Professional Success Chime (Token Generation)
-   * Elegant, warm 2-tone glass interval (A4 -> E5) with exponential decay
    */
   playSuccess() {
     if (!this.enabled) return;
@@ -42,7 +41,7 @@ class SoundFX {
       osc1.start(now);
       osc1.stop(now + 0.5);
 
-      // Note 2: E5 (659.25Hz) delayed by 90ms (Warm perfect fifth interval)
+      // Note 2: E5 (659.25Hz) delayed by 90ms
       const osc2 = this.ctx.createOscillator();
       const gain2 = this.ctx.createGain();
       osc2.type = 'sine';
@@ -60,7 +59,6 @@ class SoundFX {
 
   /**
    * Enterprise Counter Announcement Chime (Call Next Token)
-   * Classic Airport / High-end Bank 2-note chime (F5 -> A5)
    */
   playCall() {
     if (!this.enabled) return;
@@ -100,7 +98,6 @@ class SoundFX {
 
   /**
    * Subtle UI Haptic Click
-   * Soft, refined tactile tap sound (like iOS / macOS interface feedback)
    */
   playClick() {
     if (!this.enabled) return;
@@ -126,6 +123,44 @@ class SoundFX {
       osc.stop(now + 0.015);
     } catch (e) {
       // Ignore
+    }
+  }
+
+  /**
+   * Multi-Language Text-To-Speech Announcer (English, Hindi, Punjabi)
+   */
+  announceToken(tokenNumber, counterName, lang = 'en') {
+    if (!this.enabled || !('speechSynthesis' in window)) return;
+
+    try {
+      window.speechSynthesis.cancel(); // Stop any pending speech
+
+      let text = `Token number ${tokenNumber}, please proceed to ${counterName}`;
+      let voiceLang = 'en-US';
+
+      if (lang === 'hi') {
+        text = `टोकन नंबर ${tokenNumber}, ${counterName} पर आएं`;
+        voiceLang = 'hi-IN';
+      } else if (lang === 'pa') {
+        text = `ਟੋਕਨ ਨੰਬਰ ${tokenNumber}, ${counterName} 'ਤੇ ਆਓ`;
+        voiceLang = 'pa-IN';
+      }
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = voiceLang;
+      utterance.rate = 0.9;
+      utterance.pitch = 1.0;
+
+      // Try to find a matching voice if available
+      const voices = window.speechSynthesis.getVoices();
+      const matchedVoice = voices.find((v) => v.lang.startsWith(voiceLang.slice(0, 2)));
+      if (matchedVoice) {
+        utterance.voice = matchedVoice;
+      }
+
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      console.warn('Speech synthesis error:', e);
     }
   }
 }
