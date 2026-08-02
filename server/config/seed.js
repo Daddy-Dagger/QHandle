@@ -7,6 +7,7 @@ const initialDepartments = [
   { name: 'Examination Cell', code: 'EXM' },
   { name: 'Library', code: 'LIB' },
   { name: 'Hostel Office', code: 'HST' },
+  { name: 'IT & Tech Support', code: 'ITS' },
 ];
 
 export const seedDatabase = async () => {

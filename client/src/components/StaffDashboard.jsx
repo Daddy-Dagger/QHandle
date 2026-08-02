@@ -1,4 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { 
+  Users, 
+  CheckCircle, 
+  Megaphone, 
+  Building2, 
+  Clock, 
+  Search, 
+  RefreshCw, 
+  Sparkles,
+  Activity,
+  AlertCircle
+} from 'lucide-react';
+import { soundFX } from '../utils/audio';
 
 function StaffDashboard({ departments }) {
   const [selectedDeptId, setSelectedDeptId] = useState('');
@@ -7,6 +20,7 @@ function StaffDashboard({ departments }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Set initial selected department when departments load
   useEffect(() => {
@@ -54,6 +68,7 @@ function StaffDashboard({ departments }) {
 
   const handleCallNext = async (counterId) => {
     try {
+      soundFX.playCall();
       setActionLoading(`call-${counterId}`);
       setError(null);
       const res = await fetch(`/api/staff/${counterId}/call-next`, {
@@ -63,7 +78,6 @@ function StaffDashboard({ departments }) {
       if (!res.ok || !data.success) {
         throw new Error(data.message || 'Failed to call next token');
       }
-      // Refresh dashboard
       await fetchStaffData(selectedDeptId);
     } catch (err) {
       console.error('Error calling next token:', err);
@@ -75,6 +89,7 @@ function StaffDashboard({ departments }) {
 
   const handleComplete = async (counterId) => {
     try {
+      soundFX.playSuccess();
       setActionLoading(`complete-${counterId}`);
       setError(null);
       const res = await fetch(`/api/staff/${counterId}/complete`, {
@@ -84,7 +99,6 @@ function StaffDashboard({ departments }) {
       if (!res.ok || !data.success) {
         throw new Error(data.message || 'Failed to complete token');
       }
-      // Refresh dashboard
       await fetchStaffData(selectedDeptId);
     } catch (err) {
       console.error('Error marking token completed:', err);
@@ -94,17 +108,38 @@ function StaffDashboard({ departments }) {
     }
   };
 
+  // Calculate statistics
+  const totalWaiting = Object.values(queueGrouped).reduce(
+    (acc, list) => acc + (Array.isArray(list) ? list.length : 0),
+    0
+  );
+  const activeCounters = counters.filter((c) => c.isOpen).length;
+  const servingCount = counters.filter((c) => c.currentServingToken).length;
+
   return (
-    <div className="staff-dashboard-container">
-      <div className="dashboard-header">
-        <h2>Staff Dashboard</h2>
+    <div className="staff-dashboard-container animate-fade-in">
+      {/* Dashboard Top Navigation / Header */}
+      <div className="dashboard-header-card">
+        <div className="dashboard-title-area">
+          <div className="dept-badge-icon">
+            <Building2 size={24} />
+          </div>
+          <div>
+            <h2>Staff Control Center</h2>
+            <p className="dashboard-subtitle">Manage counters & invoke caller system</p>
+          </div>
+        </div>
+
         <div className="dept-select-wrapper">
-          <label htmlFor="department-select">Select Department:</label>
+          <label htmlFor="department-select">Department:</label>
           <select
             id="department-select"
             className="dept-select"
             value={selectedDeptId}
-            onChange={(e) => setSelectedDeptId(e.target.value)}
+            onChange={(e) => {
+              soundFX.playClick();
+              setSelectedDeptId(e.target.value);
+            }}
           >
             {departments.map((dept) => (
               <option key={dept._id} value={dept._id}>
@@ -112,43 +147,109 @@ function StaffDashboard({ departments }) {
               </option>
             ))}
           </select>
+          <button
+            type="button"
+            className="btn-icon-refresh"
+            onClick={() => {
+              soundFX.playClick();
+              fetchStaffData(selectedDeptId);
+            }}
+            title="Refresh Data"
+          >
+            <RefreshCw size={18} />
+          </button>
+        </div>
+      </div>
+
+      {/* Overview Analytics Bar */}
+      <div className="staff-stats-grid">
+        <div className="staff-stat-card border-indigo">
+          <div className="stat-icon-wrapper indigo">
+            <Activity size={20} />
+          </div>
+          <div>
+            <span className="stat-label">Active Counters</span>
+            <span className="stat-value">{activeCounters} / {counters.length}</span>
+          </div>
+        </div>
+
+        <div className="staff-stat-card border-sky">
+          <div className="stat-icon-wrapper sky">
+            <Megaphone size={20} />
+          </div>
+          <div>
+            <span className="stat-label">Currently Serving</span>
+            <span className="stat-value">{servingCount} Tokens</span>
+          </div>
+        </div>
+
+        <div className="staff-stat-card border-amber">
+          <div className="stat-icon-wrapper amber">
+            <Users size={20} />
+          </div>
+          <div>
+            <span className="stat-label">Total Waiting</span>
+            <span className="stat-value">{totalWaiting} Tokens</span>
+          </div>
         </div>
       </div>
 
       {error && (
-        <div className="error-banner">
-          <p>⚠️ {error}</p>
+        <div className="error-banner flex-center">
+          <AlertCircle size={18} />
+          <span>{error}</span>
         </div>
       )}
 
-      {loading ? (
-        <div className="loading-state">Loading dashboard data...</div>
+      {loading && !counters.length ? (
+        <div className="loading-state flex-center">
+          <RefreshCw className="spin" size={24} />
+          <span>Loading Counter Controls...</span>
+        </div>
       ) : (
         <>
+          {/* Counters Grid */}
+          <div className="section-label">
+            <Sparkles size={18} className="text-indigo" />
+            <span>Counter Control Terminals</span>
+          </div>
+
           <div className="counter-cards-grid">
             {counters.map((counter) => {
               const isCallLoading = actionLoading === `call-${counter._id}`;
               const isCompleteLoading = actionLoading === `complete-${counter._id}`;
-              const servingTokenNumber = counter.currentServingToken?.tokenNumber || 'None';
+              const servingToken = counter.currentServingToken;
 
               return (
-                <div key={counter._id} className="counter-card">
+                <div key={counter._id} className={`counter-card ${servingToken ? 'has-serving' : ''}`}>
                   <div className="counter-card-header">
                     <h3 className="counter-name">{counter.name}</h3>
                     <span className={`status-pill ${counter.isOpen ? 'open' : 'closed'}`}>
-                      {counter.isOpen ? 'Open' : 'Closed'}
+                      <span className={`pill-dot ${counter.isOpen ? 'green' : 'red'}`} />
+                      {counter.isOpen ? 'OPEN' : 'CLOSED'}
                     </span>
+                  </div>
+
+                  <div className="serving-display-box">
+                    <span className="serving-label">CURRENTLY SERVING</span>
+                    <div className="serving-token-number">
+                      {servingToken ? (
+                        <span className="token-text pulse-glow">{servingToken.tokenNumber}</span>
+                      ) : (
+                        <span className="none-text">VACANT</span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="counter-metrics">
                     <div className="metric-box">
-                      <span className="metric-label">Queue Count</span>
+                      <span className="metric-label">Waiting in Queue</span>
                       <span className="metric-value">{counter.currentQueueCount}</span>
                     </div>
                     <div className="metric-box">
-                      <span className="metric-label">Currently Serving</span>
-                      <span className={`metric-value serving-highlight ${servingTokenNumber !== 'None' ? 'active' : ''}`}>
-                        {servingTokenNumber}
+                      <span className="metric-label">Status</span>
+                      <span className="metric-value highlight">
+                        {servingToken ? 'In Service' : counter.isOpen ? 'Ready' : 'Offline'}
                       </span>
                     </div>
                   </div>
@@ -160,15 +261,18 @@ function StaffDashboard({ departments }) {
                       onClick={() => handleCallNext(counter._id)}
                       disabled={isCallLoading || isCompleteLoading || !counter.isOpen}
                     >
-                      {isCallLoading ? 'Calling...' : 'Call Next'}
+                      <Megaphone size={16} />
+                      <span>{isCallLoading ? 'Calling...' : 'Call Next'}</span>
                     </button>
+
                     <button
                       type="button"
                       className="btn-action btn-complete"
                       onClick={() => handleComplete(counter._id)}
-                      disabled={isCallLoading || isCompleteLoading || servingTokenNumber === 'None'}
+                      disabled={isCallLoading || isCompleteLoading || !servingToken}
                     >
-                      {isCompleteLoading ? 'Completing...' : 'Mark Completed'}
+                      <CheckCircle size={16} />
+                      <span>{isCompleteLoading ? 'Completing...' : 'Complete'}</span>
                     </button>
                   </div>
                 </div>
@@ -176,42 +280,73 @@ function StaffDashboard({ departments }) {
             })}
           </div>
 
+          {/* Waiting Queue List */}
           <div className="waiting-queue-section">
-            <h3>Waiting Tokens</h3>
+            <div className="waiting-queue-header">
+              <div className="queue-header-title">
+                <Clock size={20} className="text-indigo" />
+                <h3>Waiting Queue Ledger</h3>
+              </div>
+
+              <div className="search-box">
+                <Search size={16} className="search-icon" />
+                <input
+                  type="text"
+                  placeholder="Search token number..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+
             {Object.keys(queueGrouped).length === 0 ? (
-              <p className="no-tokens-msg">No queues found.</p>
+              <p className="no-tokens-msg">No active queues found.</p>
             ) : (
-              Object.entries(queueGrouped).map(([counterName, tokens]) => (
-                <div key={counterName} className="counter-queue-group">
-                  <h4 className="counter-group-title">{counterName} ({tokens.length} waiting)</h4>
-                  {tokens.length === 0 ? (
-                    <p className="no-tokens-msg">No waiting tokens for {counterName}</p>
-                  ) : (
-                    <div className="table-responsive">
-                      <table className="queue-table">
-                        <thead>
-                          <tr>
-                            <th>Token Number</th>
-                            <th>Status</th>
-                            <th>Created At</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {tokens.map((token) => (
-                            <tr key={token._id}>
-                              <td className="token-cell">{token.tokenNumber}</td>
-                              <td>
-                                <span className="status-tag waiting">{token.status}</span>
-                              </td>
-                              <td>{new Date(token.createdAt).toLocaleTimeString()}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+              Object.entries(queueGrouped).map(([counterName, tokens]) => {
+                const filteredTokens = (tokens || []).filter((t) =>
+                  t.tokenNumber.toLowerCase().includes(searchTerm.toLowerCase())
+                );
+
+                return (
+                  <div key={counterName} className="counter-queue-group">
+                    <div className="counter-group-banner">
+                      <span className="group-title">{counterName}</span>
+                      <span className="group-count">{tokens.length} waiting</span>
                     </div>
-                  )}
-                </div>
-              ))
+
+                    {filteredTokens.length === 0 ? (
+                      <p className="no-tokens-msg">No matching tokens waiting for {counterName}</p>
+                    ) : (
+                      <div className="table-responsive">
+                        <table className="queue-table">
+                          <thead>
+                            <tr>
+                              <th>Queue Position</th>
+                              <th>Token Number</th>
+                              <th>Status</th>
+                              <th>Issued Time</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filteredTokens.map((token, index) => (
+                              <tr key={token._id} className="table-row-hover">
+                                <td className="position-cell">#{index + 1}</td>
+                                <td className="token-cell">{token.tokenNumber}</td>
+                                <td>
+                                  <span className="status-tag waiting">
+                                    <Clock size={12} /> {token.status}
+                                  </span>
+                                </td>
+                                <td>{new Date(token.createdAt).toLocaleTimeString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
         </>
