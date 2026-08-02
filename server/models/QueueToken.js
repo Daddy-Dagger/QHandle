@@ -20,6 +20,16 @@ const queueTokenSchema = new mongoose.Schema({
     enum: ['Waiting', 'Serving', 'Completed'],
     default: 'Waiting',
   },
+  studentName: {
+    type: String,
+    trim: true,
+    default: 'Guest Student',
+  },
+  studentId: {
+    type: String,
+    trim: true,
+    default: 'N/A',
+  },
   createdAt: {
     type: Date,
     default: Date.now,

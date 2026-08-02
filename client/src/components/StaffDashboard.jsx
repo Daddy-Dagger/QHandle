@@ -9,11 +9,14 @@ import {
   RefreshCw, 
   Sparkles,
   Activity,
-  AlertCircle
+  AlertCircle,
+  LogOut,
+  User,
+  ShieldCheck
 } from 'lucide-react';
 import { soundFX } from '../utils/audio';
 
-function StaffDashboard({ departments }) {
+function StaffDashboard({ departments, staffSession, onLogoutStaff }) {
   const [selectedDeptId, setSelectedDeptId] = useState('');
   const [counters, setCounters] = useState([]);
   const [queueGrouped, setQueueGrouped] = useState({});
@@ -22,12 +25,23 @@ function StaffDashboard({ departments }) {
   const [actionLoading, setActionLoading] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Set initial selected department when departments load
+  // Set initial selected department based on staffSession or first department
   useEffect(() => {
-    if (departments && departments.length > 0 && !selectedDeptId) {
-      setSelectedDeptId(departments[0]._id);
+    if (departments && departments.length > 0) {
+      if (staffSession?.department) {
+        const matchedDept = departments.find(
+          (d) => d.name.toLowerCase() === staffSession.department.toLowerCase()
+        );
+        if (matchedDept) {
+          setSelectedDeptId(matchedDept._id);
+          return;
+        }
+      }
+      if (!selectedDeptId) {
+        setSelectedDeptId(departments[0]._id);
+      }
     }
-  }, [departments, selectedDeptId]);
+  }, [departments, staffSession, selectedDeptId]);
 
   // Fetch staff data when selected department changes
   useEffect(() => {
@@ -129,6 +143,32 @@ function StaffDashboard({ departments }) {
             <p className="dashboard-subtitle">Manage counters & invoke caller system</p>
           </div>
         </div>
+
+        {staffSession && (
+          <div className="staff-user-badge-bar">
+            <div className="staff-profile-chip">
+              <ShieldCheck size={16} className="text-emerald" />
+              <span>
+                <strong>{staffSession.name}</strong> (ID: {staffSession.staffId})
+              </span>
+              <span className="staff-dept-pill">{staffSession.department}</span>
+            </div>
+            {onLogoutStaff && (
+              <button
+                type="button"
+                className="staff-logout-btn"
+                onClick={() => {
+                  soundFX.playClick();
+                  onLogoutStaff();
+                }}
+                title="Log Out of Staff Portal"
+              >
+                <LogOut size={14} />
+                <span>Log Out</span>
+              </button>
+            )}
+          </div>
+        )}
 
         <div className="dept-select-wrapper">
           <label htmlFor="department-select">Department:</label>

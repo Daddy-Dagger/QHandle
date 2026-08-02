@@ -18,7 +18,7 @@ router.get('/departments', async (req, res) => {
 // POST /api/queue/join - Join department queue
 router.post('/queue/join', async (req, res) => {
   try {
-    const { departmentId } = req.body;
+    const { departmentId, studentName, studentId } = req.body;
 
     if (!departmentId) {
       return res.status(400).json({ success: false, message: 'departmentId is required' });
@@ -49,11 +49,13 @@ router.post('/queue/join', async (req, res) => {
     await selectedCounter.save();
 
     // Create QueueToken document
-    await QueueToken.create({
+    const newToken = await QueueToken.create({
       tokenNumber,
       department: departmentId,
       counter: selectedCounter._id,
       status: 'Waiting',
+      studentName: studentName || 'Guest Student',
+      studentId: studentId || 'N/A',
     });
 
     return res.json({
@@ -61,6 +63,8 @@ router.post('/queue/join', async (req, res) => {
       tokenNumber,
       counter: selectedCounter.name,
       position: selectedCounter.currentQueueCount,
+      studentName: newToken.studentName,
+      studentId: newToken.studentId,
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });

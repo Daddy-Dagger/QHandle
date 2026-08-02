@@ -70,6 +70,11 @@ const TokenCard = ({ tokenData, onReset, onRefresh }) => {
 
         <div className="token-dept-title">
           <h3>{tokenData.departmentName}</h3>
+          {tokenData.studentName && (
+            <div className="token-student-info-chip" style={{ marginTop: '0.4rem', fontSize: '0.85rem', color: '#a7f3d0' }}>
+              <span>🎓 Issued to: <strong>{tokenData.studentName}</strong> ({tokenData.studentId})</span>
+            </div>
+          )}
           <p className="token-timestamp">
             Issued at {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </p>

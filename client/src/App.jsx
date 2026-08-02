@@ -16,8 +16,13 @@ import {
   LayoutDashboard, 
   Volume2, 
   VolumeX, 
-  Zap 
+  Zap,
+  LogOut,
+  User,
+  LogIn
 } from 'lucide-react';
+import StudentLoginPage from './components/StudentLoginPage';
+import StaffLoginPage from './components/StaffLoginPage';
 import StaffDashboard from './components/StaffDashboard';
 import TVDisplay from './components/TVDisplay';
 import TokenCard from './components/TokenCard';
@@ -71,6 +76,24 @@ const DEPT_CONFIG = {
 };
 
 function App() {
+  const [studentSession, setStudentSession] = useState(() => {
+    try {
+      const saved = localStorage.getItem('qhandle_student_session');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  const [staffSession, setStaffSession] = useState(() => {
+    try {
+      const saved = localStorage.getItem('qhandle_staff_session');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
   const [activeTab, setActiveTab] = useState('student');
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -103,6 +126,31 @@ function App() {
     }
   };
 
+  const handleStudentLogin = (sessionData) => {
+    setStudentSession(sessionData);
+    localStorage.setItem('qhandle_student_session', JSON.stringify(sessionData));
+    setActiveTab('student');
+  };
+
+  const handleStaffLogin = (sessionData) => {
+    setStaffSession(sessionData);
+    localStorage.setItem('qhandle_staff_session', JSON.stringify(sessionData));
+    setActiveTab('staff');
+  };
+
+  const handleStudentLogout = () => {
+    soundFX.playClick();
+    setStudentSession(null);
+    localStorage.removeItem('qhandle_student_session');
+    setSelectedToken(null);
+  };
+
+  const handleStaffLogout = () => {
+    soundFX.playClick();
+    setStaffSession(null);
+    localStorage.removeItem('qhandle_staff_session');
+  };
+
   const handleJoinQueue = async (dept) => {
     try {
       soundFX.playClick();
@@ -111,7 +159,11 @@ function App() {
       const res = await fetch('/api/queue/join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ departmentId: dept._id }),
+        body: JSON.stringify({
+          departmentId: dept._id,
+          studentName: studentSession?.name || 'Guest Student',
+          studentId: studentSession?.studentId || 'N/A',
+        }),
       });
 
       const data = await res.json();
@@ -125,6 +177,8 @@ function App() {
         tokenNumber: data.tokenNumber,
         counter: data.counter,
         position: data.position,
+        studentName: data.studentName,
+        studentId: data.studentId,
       });
     } catch (err) {
       console.error('Error joining queue:', err);
@@ -184,19 +238,19 @@ function App() {
         <nav className="nav-links">
           <button
             type="button"
-            className={`nav-btn ${activeTab === 'student' ? 'active' : ''}`}
+            className={`nav-btn ${activeTab === 'student' || activeTab === 'student-login' ? 'active' : ''}`}
             onClick={() => {
               soundFX.playClick();
               setActiveTab('student');
             }}
           >
             <UserCheck size={16} />
-            <span>Student Queue</span>
+            <span>Student Portal</span>
           </button>
 
           <button
             type="button"
-            className={`nav-btn ${activeTab === 'staff' ? 'active' : ''}`}
+            className={`nav-btn ${activeTab === 'staff' || activeTab === 'staff-login' ? 'active' : ''}`}
             onClick={() => {
               soundFX.playClick();
               setActiveTab('staff');
@@ -231,140 +285,190 @@ function App() {
 
       {/* Main Section */}
       <main className="hero-section">
+        {/* STUDENT PORTAL TAB */}
         {activeTab === 'student' && (
-          <>
-            {!selectedToken ? (
-              <div className="student-portal-wrapper animate-fade-in">
-                {/* Hero Headline */}
-                <div className="hero-badge">
-                  <Sparkles size={14} className="text-amber" />
-                  <span>Next-Gen Campus Queue System</span>
-                </div>
+          !studentSession ? (
+            <StudentLoginPage
+              onLogin={handleStudentLogin}
+              onSwitchToStaff={() => {
+                soundFX.playClick();
+                setActiveTab('staff');
+              }}
+            />
+          ) : (
+            <>
+              {!selectedToken ? (
+                <div className="student-portal-wrapper animate-fade-in">
+                  {/* Logged in Student Profile Bar */}
+                  <div className="student-user-bar glass-card">
+                    <div className="user-info-group">
+                      <div className="user-avatar-circle">
+                        <GraduationCap size={20} />
+                      </div>
+                      <div className="user-details">
+                        <span className="user-name-text">Welcome, {studentSession.name}</span>
+                        <span className="user-id-text">Student Roll / ID: <strong>{studentSession.studentId}</strong></span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="logout-icon-btn"
+                      onClick={handleStudentLogout}
+                      title="Log Out Student"
+                    >
+                      <LogOut size={14} />
+                      <span>Log Out</span>
+                    </button>
+                  </div>
 
-                <h1 className="title shimmer-text">
-                  Queue Less. <br />
-                  <span className="gradient-highlight">Achieve More.</span>
-                </h1>
+                  {/* Hero Headline */}
+                  <div className="hero-badge">
+                    <Sparkles size={14} className="text-amber" />
+                    <span>Next-Gen Campus Queue System</span>
+                  </div>
 
-                <p className="subtitle">
-                  Instant digital queue tokens for all major campus service departments.
-                </p>
+                  <h1 className="title shimmer-text">
+                    Queue Less. <br />
+                    <span className="gradient-highlight">Achieve More.</span>
+                  </h1>
 
-                {/* Campus Live Metrics Bar */}
-                <div className="hero-stats-strip glass-card">
-                  <div className="stat-pill">
-                    <Activity size={18} className="text-emerald" />
-                    <div>
-                      <span className="pill-val">{departments.length || 6} Active</span>
-                      <span className="pill-lbl">Departments</span>
+                  <p className="subtitle">
+                    Select a department below to instantly issue your student queue token.
+                  </p>
+
+                  {/* Campus Live Metrics Bar */}
+                  <div className="hero-stats-strip glass-card">
+                    <div className="stat-pill">
+                      <Activity size={18} className="text-emerald" />
+                      <div>
+                        <span className="pill-val">{departments.length || 6} Active</span>
+                        <span className="pill-lbl">Departments</span>
+                      </div>
+                    </div>
+                    <div className="stat-divider"></div>
+                    <div className="stat-pill">
+                      <Clock size={18} className="text-sky" />
+                      <div>
+                        <span className="pill-val">~3 Mins</span>
+                        <span className="pill-lbl">Avg Wait Time</span>
+                      </div>
+                    </div>
+                    <div className="stat-divider"></div>
+                    <div className="stat-pill">
+                      <ShieldCheck size={18} className="text-indigo" />
+                      <div>
+                        <span className="pill-val">Verified</span>
+                        <span className="pill-lbl">Digital Ticket</span>
+                      </div>
                     </div>
                   </div>
-                  <div className="stat-divider"></div>
-                  <div className="stat-pill">
-                    <Clock size={18} className="text-sky" />
-                    <div>
-                      <span className="pill-val">~3 Mins</span>
-                      <span className="pill-lbl">Avg Wait Time</span>
+
+                  {/* Search Bar */}
+                  <div className="search-filter-wrapper">
+                    <div className="search-input-box glass-card">
+                      <Search size={18} className="search-icon" />
+                      <input
+                        type="text"
+                        placeholder="Search department (e.g. Scholarship, Accounts, Exam)..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
                     </div>
                   </div>
-                  <div className="stat-divider"></div>
-                  <div className="stat-pill">
-                    <ShieldCheck size={18} className="text-indigo" />
-                    <div>
-                      <span className="pill-val">Realtime</span>
-                      <span className="pill-lbl">Token Dispatch</span>
+
+                  {error && (
+                    <div className="error-banner animate-fade-in">
+                      <p>⚠️ {error}</p>
                     </div>
-                  </div>
-                </div>
+                  )}
 
-                {/* Search Bar */}
-                <div className="search-filter-wrapper">
-                  <div className="search-input-box glass-card">
-                    <Search size={18} className="search-icon" />
-                    <input
-                      type="text"
-                      placeholder="Search department (e.g. Scholarship, Accounts, Exam)..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-                </div>
+                  {/* Departments Grid */}
+                  {loading ? (
+                    <div className="loading-state glass-card">
+                      <div className="spinner"></div>
+                      <p>Loading Department Services...</p>
+                    </div>
+                  ) : (
+                    <div className="dept-grid">
+                      {filteredDepartments.map((dept) => {
+                        const cfg = DEPT_CONFIG[dept.name] || {
+                          icon: Building,
+                          accent: 'indigo',
+                          color: '#818cf8',
+                          description: 'Campus services office',
+                        };
+                        const IconComponent = cfg.icon;
+                        const isJoining = joiningId === dept._id;
 
-                {error && (
-                  <div className="error-banner animate-fade-in">
-                    <p>⚠️ {error}</p>
-                  </div>
-                )}
-
-                {/* Departments Grid */}
-                {loading ? (
-                  <div className="loading-state glass-card">
-                    <div className="spinner"></div>
-                    <p>Loading Department Services...</p>
-                  </div>
-                ) : (
-                  <div className="dept-grid">
-                    {filteredDepartments.map((dept) => {
-                      const cfg = DEPT_CONFIG[dept.name] || {
-                        icon: Building,
-                        accent: 'indigo',
-                        color: '#818cf8',
-                        description: 'Campus services office',
-                      };
-                      const IconComponent = cfg.icon;
-                      const isJoining = joiningId === dept._id;
-
-                      return (
-                        <div
-                          key={dept._id}
-                          className={`dept-card glass-card accent-${cfg.accent} ${isJoining ? 'joining' : ''}`}
-                          onClick={() => !isJoining && handleJoinQueue(dept)}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(e) => e.key === 'Enter' && handleJoinQueue(dept)}
-                        >
-                          <div className="dept-card-top">
-                            <div className={`icon-avatar icon-bg-${cfg.accent}`}>
-                              <IconComponent size={24} style={{ color: cfg.color }} />
+                        return (
+                          <div
+                            key={dept._id}
+                            className={`dept-card glass-card accent-${cfg.accent} ${isJoining ? 'joining' : ''}`}
+                            onClick={() => !isJoining && handleJoinQueue(dept)}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => e.key === 'Enter' && handleJoinQueue(dept)}
+                          >
+                            <div className="dept-card-top">
+                              <div className={`icon-avatar icon-bg-${cfg.accent}`}>
+                                <IconComponent size={24} style={{ color: cfg.color }} />
+                              </div>
+                              <span className="dept-code-tag">{dept.code}</span>
                             </div>
-                            <span className="dept-code-tag">{dept.code}</span>
-                          </div>
 
-                          <div className="dept-card-body">
-                            <h3 className="dept-name">{dept.name}</h3>
-                            <p className="dept-desc">{cfg.description}</p>
-                          </div>
+                            <div className="dept-card-body">
+                              <h3 className="dept-name">{dept.name}</h3>
+                              <p className="dept-desc">{cfg.description}</p>
+                            </div>
 
-                          <div className="dept-card-footer">
-                            <button className="btn-join-glow" type="button" disabled={isJoining}>
-                              {isJoining ? (
-                                <span className="btn-loading">Issuing Token...</span>
-                              ) : (
-                                <span>Get Queue Token →</span>
-                              )}
-                            </button>
+                            <div className="dept-card-footer">
+                              <button className="btn-join-glow" type="button" disabled={isJoining}>
+                                {isJoining ? (
+                                  <span className="btn-loading">Issuing Token...</span>
+                                ) : (
+                                  <span>Get Queue Token →</span>
+                                )}
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            ) : (
-              /* Token Display Ticket Pass */
-              <TokenCard
-                tokenData={selectedToken}
-                onReset={handleResetToken}
-                onRefresh={handleRefreshPosition}
-              />
-            )}
-          </>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Token Display Ticket Pass */
+                <TokenCard
+                  tokenData={selectedToken}
+                  onReset={handleResetToken}
+                  onRefresh={handleRefreshPosition}
+                />
+              )}
+            </>
+          )
         )}
 
+        {/* STAFF PORTAL TAB */}
         {activeTab === 'staff' && (
-          <StaffDashboard departments={departments} />
+          !staffSession ? (
+            <StaffLoginPage
+              departments={departments}
+              onLogin={handleStaffLogin}
+              onSwitchToStudent={() => {
+                soundFX.playClick();
+                setActiveTab('student');
+              }}
+            />
+          ) : (
+            <StaffDashboard
+              departments={departments}
+              staffSession={staffSession}
+              onLogoutStaff={handleStaffLogout}
+            />
+          )
         )}
 
+        {/* TV DISPLAY TAB */}
         {activeTab === 'tv' && (
           <TVDisplay departments={departments} />
         )}
