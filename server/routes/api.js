@@ -39,32 +39,152 @@ router.post('/queue/join', async (req, res) => {
     openCounters.sort((a, b) => a.currentQueueCount - b.currentQueueCount);
     const selectedCounter = openCounters[0];
 
-    // Generate token number using department code
-    const tokenCount = await QueueToken.countDocuments({ department: departmentId });
-    const nextNumber = tokenCount + 1;
-    const tokenNumber = `${department.code}-${String(nextNumber).padStart(3, '0')}`;
+    const today = new Date().toISOString().split('T')[0];
 
-    // Increment selected counter's queue count
-    selectedCounter.currentQueueCount += 1;
-    await selectedCounter.save();
+    // Daily reset check: Atomically reset token sequence to 0 if lastResetDate is not today
+    if (department.lastResetDate !== today) {
+      const resetDept = await Department.findOneAndUpdate(
+        { _id: departmentId, lastResetDate: { $ne: today } },
+        { $set: { tokenSequence: 0, lastResetDate: today } },
+        { returnDocument: 'after' }
+      );
+      if (resetDept) {
+        // Reset active counter queue counts on a new day
+        await Counter.updateMany({ department: departmentId }, { $set: { currentQueueCount: 0 } });
+        selectedCounter.currentQueueCount = 0;
+      }
+    }
 
-    // Create QueueToken document
-    const newToken = await QueueToken.create({
-      tokenNumber,
-      department: departmentId,
-      counter: selectedCounter._id,
-      status: 'Waiting',
-      studentName: studentName || 'Guest Student',
-      studentId: studentId || 'N/A',
-    });
+    let newToken;
+    let tokenNumber;
+    let updatedCounter;
+    const maxRetries = 3;
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        // Atomically increment department token sequence to prevent race conditions
+        const updatedDept = await Department.findByIdAndUpdate(
+          departmentId,
+          { $inc: { tokenSequence: 1 } },
+          { returnDocument: 'after' }
+        );
+
+        const nextNumber = updatedDept.tokenSequence;
+        tokenNumber = `${department.code}-${String(nextNumber).padStart(3, '0')}`;
+
+        // Increment selected counter's queue count atomically
+        updatedCounter = await Counter.findByIdAndUpdate(
+          selectedCounter._id,
+          { $inc: { currentQueueCount: 1 } },
+          { returnDocument: 'after' }
+        );
+
+        // Create QueueToken document with today's date
+        newToken = await QueueToken.create({
+          tokenNumber,
+          department: departmentId,
+          counter: selectedCounter._id,
+          status: 'Waiting',
+          date: today,
+          studentName: studentName || 'Guest Student',
+          studentId: studentId || 'N/A',
+        });
+
+        break;
+      } catch (err) {
+        if (updatedCounter) {
+          await Counter.findByIdAndUpdate(selectedCounter._id, { $inc: { currentQueueCount: -1 } });
+          updatedCounter = null;
+        }
+
+        if (err.code === 11000 && attempt < maxRetries - 1) {
+          continue;
+        }
+        throw err;
+      }
+    }
 
     return res.json({
       success: true,
       tokenNumber,
       counter: selectedCounter.name,
-      position: selectedCounter.currentQueueCount,
+      position: updatedCounter.currentQueueCount,
       studentName: newToken.studentName,
       studentId: newToken.studentId,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// POST /api/queue/leave - Leave / cancel student queue token
+router.post('/queue/leave', async (req, res) => {
+  try {
+    const { tokenNumber, departmentId } = req.body;
+
+    if (!tokenNumber) {
+      return res.status(400).json({ success: false, message: 'tokenNumber is required' });
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+
+    // Find waiting token for today
+    const token = await QueueToken.findOne({
+      tokenNumber,
+      ...(departmentId ? { department: departmentId } : {}),
+      status: 'Waiting',
+      date: today,
+    });
+
+    if (!token) {
+      return res.status(404).json({
+        success: false,
+        message: 'Token not found or is no longer in waiting state.',
+      });
+    }
+
+    // Update status to Cancelled
+    token.status = 'Cancelled';
+    await token.save();
+
+    // Decrement assigned counter's currentQueueCount if greater than 0
+    if (token.counter) {
+      await Counter.updateOne(
+        { _id: token.counter, currentQueueCount: { $gt: 0 } },
+        { $inc: { currentQueueCount: -1 } }
+      );
+    }
+
+    return res.json({
+      success: true,
+      message: 'Successfully left the queue',
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// POST /api/departments/:departmentId/reset-sequence - Manual reset of daily token sequence
+router.post('/departments/:departmentId/reset-sequence', async (req, res) => {
+  try {
+    const { departmentId } = req.params;
+    const today = new Date().toISOString().split('T')[0];
+
+    const updatedDept = await Department.findByIdAndUpdate(
+      departmentId,
+      { $set: { tokenSequence: 0, lastResetDate: today } },
+      { returnDocument: 'after' }
+    );
+
+    if (!updatedDept) {
+      return res.status(404).json({ success: false, message: 'Department not found' });
+    }
+
+    await Counter.updateMany({ department: departmentId }, { $set: { currentQueueCount: 0 } });
+
+    return res.json({
+      success: true,
+      message: `Token sequence reset to 0 for department ${updatedDept.name}`,
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -135,17 +255,15 @@ router.post('/staff/:counterId/call-next', async (req, res) => {
   try {
     const { counterId } = req.params;
 
-    const token = await QueueToken.findOne({
-      counter: counterId,
-      status: 'Waiting',
-    }).sort({ createdAt: 1 });
+    const token = await QueueToken.findOneAndUpdate(
+      { counter: counterId, status: 'Waiting' },
+      { status: 'Serving' },
+      { returnDocument: 'after', sort: { createdAt: 1 } }
+    );
 
     if (!token) {
       return res.status(404).json({ success: false, message: 'No waiting tokens for this counter' });
     }
-
-    token.status = 'Serving';
-    await token.save();
 
     return res.json({
       success: true,
@@ -166,18 +284,18 @@ router.post('/staff/:counterId/complete', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Counter not found' });
     }
 
-    const servingToken = await QueueToken.findOne({
-      counter: counterId,
-      status: 'Serving',
-    });
+    const servingToken = await QueueToken.findOneAndUpdate(
+      { counter: counterId, status: 'Serving' },
+      { status: 'Completed' },
+      { returnDocument: 'after' }
+    );
 
     if (servingToken) {
-      servingToken.status = 'Completed';
-      await servingToken.save();
+      await Counter.updateOne(
+        { _id: counterId, currentQueueCount: { $gt: 0 } },
+        { $inc: { currentQueueCount: -1 } }
+      );
     }
-
-    counter.currentQueueCount = Math.max(0, counter.currentQueueCount - 1);
-    await counter.save();
 
     return res.json({
       success: true,

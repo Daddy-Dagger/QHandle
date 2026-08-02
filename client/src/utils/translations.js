@@ -45,6 +45,9 @@ export const translations = {
     printPass: 'Print Pass',
     refreshPosition: 'Refresh',
     joinAnotherQueue: 'Join Another Queue',
+    leaveQueue: 'Leave Queue',
+    leavingQueue: 'Leaving Queue...',
+    confirmLeaveQueue: 'Are you sure you want to leave the queue and cancel your token?',
 
     // Student Login Page
     studentAccessPortal: 'Student Access Portal',
@@ -184,6 +187,9 @@ export const translations = {
     printPass: 'पास प्रिंट करें',
     refreshPosition: 'रिफ्रेश',
     joinAnotherQueue: 'दूसरी कतार में शामिल हों',
+    leaveQueue: 'कतार छोड़ें',
+    leavingQueue: 'कतार छोड़ी जा रही है...',
+    confirmLeaveQueue: 'क्या आप निश्चित रूप से कतार छोड़ना और अपना टोकन रद्द करना चाहते हैं?',
 
     // Student Login Page
     studentAccessPortal: 'छात्र प्रवेश पोर्टल',
@@ -323,6 +329,9 @@ export const translations = {
     printPass: 'ਪਾਸ ਪ੍ਰਿੰਟ ਕਰੋ',
     refreshPosition: 'ਰਿਫ੍ਰੈਸ਼',
     joinAnotherQueue: 'ਹੋਰ ਕਿਊ ਵਿੱਚ ਸ਼ਾਮਲ ਹੋਵੋ',
+    leaveQueue: 'ਕਿਊ ਛੱਡੋ',
+    leavingQueue: 'ਕਿਊ ਛੱਡੀ ਜਾ ਰਹੀ ਹੈ...',
+    confirmLeaveQueue: 'ਕੀ ਤੁਸੀਂ ਯਕੀਨੀ ਤੌਰ \'ਤੇ ਕਿਊ ਛੱਡਣਾ ਅਤੇ ਆਪਣਾ ਟੋਕਨ ਰੱਦ ਕਰਨਾ ਚਾਹੁੰਦੇ ਹੋ?',
 
     // Student Login Page
     studentAccessPortal: 'ਵਿਦਿਆਰਥੀ ਪੋਰਟਲ',

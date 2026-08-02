@@ -13,6 +13,14 @@ const departmentSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    tokenSequence: {
+      type: Number,
+      default: 0,
+    },
+    lastResetDate: {
+      type: String,
+      default: () => new Date().toISOString().split('T')[0],
+    },
     isActive: {
       type: Boolean,
       default: true,

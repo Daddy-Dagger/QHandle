@@ -17,8 +17,12 @@ const queueTokenSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Waiting', 'Serving', 'Completed'],
+    enum: ['Waiting', 'Serving', 'Completed', 'Cancelled'],
     default: 'Waiting',
+  },
+  date: {
+    type: String,
+    default: () => new Date().toISOString().split('T')[0],
   },
   studentName: {
     type: String,
@@ -35,6 +39,8 @@ const queueTokenSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+
+queueTokenSchema.index({ department: 1, tokenNumber: 1, date: 1 }, { unique: true });
 
 const QueueToken = mongoose.model('QueueToken', queueTokenSchema);
 

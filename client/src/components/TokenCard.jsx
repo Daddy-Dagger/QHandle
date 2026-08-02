@@ -10,7 +10,8 @@ import {
   RefreshCw, 
   ArrowLeft, 
   ShieldCheck, 
-  TrendingUp 
+  TrendingUp,
+  LogOut
 } from 'lucide-react';
 import { soundFX } from '../utils/audio';
 import { useLanguage } from '../context/LanguageContext';
@@ -19,6 +20,7 @@ const TokenCard = ({ tokenData, onReset, onRefresh }) => {
   const { t, getTranslatedDept } = useLanguage();
   const [copied, setCopied] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
 
   useEffect(() => {
     // Sound FX & Confetti on issue
@@ -50,6 +52,34 @@ const TokenCard = ({ tokenData, onReset, onRefresh }) => {
     soundFX.playClick();
     await onRefresh();
     setTimeout(() => setIsRefreshing(false), 500);
+  };
+
+  const handleLeaveQueue = async () => {
+    if (!window.confirm(t('confirmLeaveQueue'))) return;
+
+    try {
+      setIsLeaving(true);
+      soundFX.playClick();
+      const res = await fetch('/api/queue/leave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tokenNumber: tokenData.tokenNumber,
+          departmentId: tokenData.departmentId,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Failed to leave queue');
+      }
+
+      onReset();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setIsLeaving(false);
+    }
   };
 
   const estWait = (tokenData.position - 1) * 3; // Approx 3 mins per person
@@ -175,10 +205,36 @@ const TokenCard = ({ tokenData, onReset, onRefresh }) => {
           </button>
         </div>
 
-        <button type="button" className="btn-primary-glow" onClick={() => { soundFX.playClick(); onReset(); }}>
-          <ArrowLeft size={18} />
-          <span>{t('joinAnotherQueue')}</span>
-        </button>
+        <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', width: '100%' }}>
+          <button 
+            type="button" 
+            className="action-btn secondary" 
+            onClick={handleLeaveQueue}
+            disabled={isLeaving}
+            style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              borderColor: 'rgba(239, 68, 68, 0.4)',
+              color: '#f87171',
+            }}
+          >
+            <LogOut size={16} />
+            <span>{isLeaving ? t('leavingQueue') : t('leaveQueue')}</span>
+          </button>
+
+          <button 
+            type="button" 
+            className="btn-primary-glow" 
+            onClick={() => { soundFX.playClick(); onReset(); }}
+            style={{ flex: 1.2, marginTop: 0 }}
+          >
+            <ArrowLeft size={18} />
+            <span>{t('joinAnotherQueue')}</span>
+          </button>
+        </div>
       </div>
     </div>
   );
