@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import connectDB from './config/db.js';
 import { seedDatabase } from './config/seed.js';
+import Department from './models/Department.js';
 import apiRoutes from './routes/api.js';
 
 dotenv.config();
@@ -19,15 +20,42 @@ const PORT = parseInt(process.env.PORT || '5001', 10);
 app.use(cors());
 app.use(express.json());
 
+// Database connection & initialization middleware (Must be before routes)
+app.use(async (req, res, next) => {
+  const isApiRoute = req.path.startsWith('/api') || req.url.startsWith('/api');
+  if (isApiRoute) {
+    try {
+      await connectDB();
+      // Seed database only if no departments exist yet
+      const deptCount = await Department.countDocuments();
+      if (deptCount === 0) {
+        await seedDatabase();
+      }
+    } catch (e) {
+      console.error('Database connection middleware failed:', e.message);
+      return res.status(500).json({
+        success: false,
+        message: `Database Connection Error: ${e.message}. Please verify your MONGO_URI in Vercel Environment Variables.`,
+      });
+    }
+  }
+  next();
+});
+
 // Routes
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', app: 'QHandle' });
+  res.json({
+    status: 'ok',
+    app: 'QHandle',
+    env: process.env.NODE_ENV || 'development',
+    isVercel: process.env.VERCEL === '1',
+  });
 });
 
 app.use('/api', apiRoutes);
 
-// Serve static assets in production
-if (process.env.NODE_ENV === 'production') {
+// Serve static assets in production (when running Express directly)
+if (process.env.NODE_ENV === 'production' && process.env.VERCEL !== '1') {
   app.use(express.static(path.join(__dirname, '../client/dist')));
 
   app.get('*', (req, res) => {
@@ -37,25 +65,15 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-// Middleware to ensure DB connection on requests
-app.use(async (req, res, next) => {
-  if (req.path.startsWith('/api')) {
-    try {
-      await connectDB();
-      await seedDatabase();
-    } catch (e) {
-      // Continue if already connected
-    }
-  }
-  next();
-});
-
 // Connect to MongoDB and start server only when running directly (not in Vercel serverless mode)
 if (process.env.VERCEL !== '1') {
   const startServer = async () => {
     try {
       await connectDB();
-      await seedDatabase();
+      const deptCount = await Department.countDocuments();
+      if (deptCount === 0) {
+        await seedDatabase();
+      }
 
       const listen = (port) => {
         const server = app.listen(port, () => {
@@ -83,3 +101,4 @@ if (process.env.VERCEL !== '1') {
 }
 
 export default app;
+

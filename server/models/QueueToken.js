@@ -42,6 +42,7 @@ const queueTokenSchema = new mongoose.Schema({
 
 queueTokenSchema.index({ department: 1, tokenNumber: 1, date: 1 }, { unique: true });
 
-const QueueToken = mongoose.model('QueueToken', queueTokenSchema);
+const QueueToken = mongoose.models.QueueToken || mongoose.model('QueueToken', queueTokenSchema);
 
 export default QueueToken;
+
